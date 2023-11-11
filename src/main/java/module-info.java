@@ -1,6 +1,5 @@
 module WebPathCrawler {
     requires org.apache.commons.io;
-    requires org.apache.commons.lang3;
     requires org.jsoup;
     requires javafx.graphics;
     requires javafx.controls;
