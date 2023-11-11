@@ -2,7 +2,7 @@
 
 WebPath Crawler is a program that allows you to paste in a URL of any folder on a web server and as long as that server has directory listing enabled, then the entire folder tree including the files within the folders from that point downward will be mirrored on your local hard drive.
 
-As it traverses all of the folders and catalogs the files, it submits the download jobs into a queue where 20 file downloads will happen simultaneously, thus speeding up the process.
+As it traverses all of the folders and catalogs the files, it submits the download jobs into a queue where 20 file downloads will happen simultaneously (adjustable with a spinner), thus speeding up the process.
 
 Also, if the transfer of files is interrupted for any reason, the next time you start the jobs, it will resume files that are not fully downloaded and pick up the download where it left off.
 
