@@ -12,7 +12,7 @@ The program remembers both the last URL you downloaded as well as your local dow
 
 The tabs at the bottom capture the standard and error output from the program and it puts various messages into the related tab categories. (this could use some improvement).
 
-The total progress bar at the top accumulates the size of each file as they are added to the job batch. It can take a little time for file size query to happen since it happens over an http connection. In addition to that, web servers have a limit, apparently on how large they report a file to be. If the file is over something like 2Gigs, it will report a filesize of 0. So the overall progress bar might not ever be completely accurate, and it will take some time for it to finish receiving all of the file sizes.
+The total progress bar at the top accumulates the size of each file as they are added to the job batch. It can take a little time for file size query to happen since it happens over an http connection. In addition to that, web servers have a limit, apparently, on how large they report a file to be. If the file is over something like 2Gigs, it will report a filesize of 0. So the overall progress bar might not ever be completely accurate, and it will take some time for it to finish receiving all of the file sizes.
 
 Once the job que count at the top of the screen stops counting, then that top progress bar will be as accurate as it's going to be.
 
