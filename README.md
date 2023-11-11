@@ -16,7 +16,7 @@ The total progress bar at the top accumulates the size of each file as they are 
 
 Once the job que count at the top of the screen stops counting, then that top progress bar will be as accurate as it's going to be.
 
-When you see files downloading where the progress bar just bounces from side to side, that would be a file that the server reported back as being of 0 size. The file will still download, but theres no way, obviously to sow the progress since we don't know what the final size of the file will be.
+When you see files downloading where the progress bar just bounces from side to side, that would be a file that the server reported back as being of 0 size. The file will still download, but theres no way, obviously to show the progress since we don't know what the final size of the file will be.
 
 ___
 I threw this project together over a weekend, and there are certainly areas that could use improvement, so feel free to create an issue or a pull request if you have any thoughts, concerns or wish to contribute.
