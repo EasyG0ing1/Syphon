@@ -1,6 +1,5 @@
 package com.simtechdata.settings;
 
-import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 
 import static com.simtechdata.settings.LABEL.*;

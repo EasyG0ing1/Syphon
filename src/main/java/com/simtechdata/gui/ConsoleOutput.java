@@ -21,21 +21,21 @@ import java.util.concurrent.*;
 public class ConsoleOutput extends AnchorPane {
 
     public boolean autoScroll = true;
-    private int MAX_ITEMS = 2000;
-    private Tab tabError = new Tab("Error");
-    private Tab tabFinished = new Tab("Complete");
-    private Tab tabCanceled = new Tab("Canceled");
-    private TabPane tabPane;
+    private final int MAX_ITEMS = 2000;
+    private final Tab tabError = new Tab("Error");
+    private final Tab tabFinished = new Tab("Complete");
+    private final Tab tabCanceled = new Tab("Canceled");
+    private final TabPane tabPane;
     private boolean errorState = false;
-    private ListView lvError = new ListView();
-    private ListView lvFinished = new ListView();
-    private ListView lvCanceled = new ListView();
-    private LinkedList<String> listFINISHED = new LinkedList<>();
-    private LinkedList<String> listCANCELED = new LinkedList<>();
-    private LinkedList<String> listERROR = new LinkedList<>();
-    private ExecutorService execLog = new ThreadPoolExecutor(20, 20, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingDeque<>());
-    private double width;
-    private double height;
+    private final ListView<TextFlow> lvError = new ListView<>();
+    private final ListView<TextFlow> lvFinished = new ListView<>();
+    private final ListView<TextFlow> lvCanceled = new ListView<>();
+    private final LinkedList<String> listFINISHED = new LinkedList<>();
+    private final LinkedList<String> listCANCELED = new LinkedList<>();
+    private final LinkedList<String> listERROR = new LinkedList<>();
+    private final ExecutorService execLog = new ThreadPoolExecutor(20, 20, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingDeque<>());
+    private final double width;
+    private final double height;
 
     public ConsoleOutput() {
         super();
@@ -56,9 +56,7 @@ public class ConsoleOutput extends AnchorPane {
         tabFinished.setContent(lvFinished);
         tabCanceled.setContent(lvCanceled);
         tabError.setContent(lvError);
-        lvError.setOnMouseEntered(e -> {
-            errorState = false;
-        });
+        lvError.setOnMouseEntered(e -> errorState = false);
 
         Button btnClipboard = getClipboardButton();
 
@@ -100,18 +98,12 @@ public class ConsoleOutput extends AnchorPane {
         return btnClipboard;
     }
 
-    private void init(ListView listView) {
+    private void init(ListView<TextFlow> listView) {
         listView.setPrefWidth(width);
         listView.setPrefHeight(height);
-        listView.setOnMouseExited(e -> {
-            autoScroll = false;
-        });
-        listView.setOnScroll(e -> {
-            autoScroll = false;
-        });
-        listView.setOnSwipeUp(e -> {
-            autoScroll = false;
-        });
+        listView.setOnMouseExited(e -> autoScroll = false);
+        listView.setOnScroll(e -> autoScroll = false);
+        listView.setOnSwipeUp(e -> autoScroll = false);
     }
 
     private void toClipboard(LinkedList<String> list) {
@@ -153,12 +145,8 @@ public class ConsoleOutput extends AnchorPane {
             if (tabType == null)
                 return;
             switch (tabType) {
-                case FINISHED -> {
-                    setLogMessage(log, tf, lvFinished, listFINISHED);
-                }
-                case CANCELED -> {
-                    setLogMessage(log, tf, lvCanceled, listCANCELED);
-                }
+                case FINISHED -> setLogMessage(log, tf, lvFinished, listFINISHED);
+                case CANCELED -> setLogMessage(log, tf, lvCanceled, listCANCELED);
                 case ERROR -> {
                     setLogMessage(log, tf, lvError, listERROR);
                     if (!errorState) {
@@ -169,7 +157,7 @@ public class ConsoleOutput extends AnchorPane {
         });
     }
 
-    private void setLogMessage(Log log, TextFlow tf, ListView lvError, LinkedList<String> listERROR) {
+    private void setLogMessage(Log log, TextFlow tf, ListView<TextFlow> lvError, LinkedList<String> listERROR) {
         Platform.runLater(() -> lvError.getItems().add(tf));
         listERROR.addLast(log.getMessage());
         if (autoScroll) {
@@ -192,7 +180,7 @@ public class ConsoleOutput extends AnchorPane {
         private final ConsoleOutput ap;
         private static StringBuilder sb = new StringBuilder();
         private final boolean error;
-        private ExecutorService executor = new ThreadPoolExecutor(1, 1, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>());
+        private final ExecutorService executor = new ThreadPoolExecutor(1, 1, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>());
 
         @Override
         public void write(int b) {

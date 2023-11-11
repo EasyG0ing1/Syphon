@@ -4,9 +4,6 @@ import javafx.geometry.Rectangle2D;
 import javafx.stage.Screen;
 import org.jsoup.nodes.Element;
 
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.LinkedBlockingDeque;
-import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.DoubleAdder;
@@ -25,12 +22,6 @@ public class Core {
     public static final double WIDTH = SCREEN_WIDTH * .8;
     public static final double HEIGHT = SCREEN_HEIGHT * .8;
     public static String baseFolder = "";
-    private static final ExecutorService execWebSize = new ThreadPoolExecutor(1, 1, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingDeque<>());
-
-    public static void addSizeTotalThread(Runnable runnable) {
-        execWebSize.submit(runnable);
-    }
-
 
     public static void addGrandTotal(long value) {
         TOTAL_SITE_DATA.add(value);
@@ -47,6 +38,7 @@ public class Core {
     public static long getFilesDownloaded() {
         return FILES_DOWNLOADED.get();
     }
+
     public static double getTotal() {
         return TOTAL_SITE_DATA.doubleValue();
     }

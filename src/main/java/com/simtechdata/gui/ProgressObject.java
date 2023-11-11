@@ -11,8 +11,8 @@ import javafx.scene.layout.VBox;
 
 public class ProgressObject extends VBox {
 
-    private Label lblFile;
-    private ProgressBar pBar;
+    private final Label lblFile;
+    private final ProgressBar pBar;
     private final double height = 40;
 
     public ProgressObject() {

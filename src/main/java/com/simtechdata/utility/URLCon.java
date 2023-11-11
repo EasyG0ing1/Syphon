@@ -14,7 +14,7 @@ public class URLCon {
     private URLConnection con;
     private final long conLength;
     private URL url = null;
-    private String filePath;
+    private final String filePath;
     private final long fileLength;
     private final String USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/56.0.2924.87 Safari/537.36";
     private boolean resume = false;

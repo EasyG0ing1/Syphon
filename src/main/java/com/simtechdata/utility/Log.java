@@ -31,11 +31,11 @@ public class Log {
         }
     }
 
-    private String red = "-fx-fill: rgb(255,0,0)";
-    private String orange = "-fx-fill: rgb(240,125,0)";
-    private String green = "-fx-fill: rgb(0,175,0)";
-    private String blue = "-fx-fill: rgb(0,0,255)";
-    private String black = "-fx-fill: rgb(0,0,0)";
+    private final String red = "-fx-fill: rgb(255,0,0)";
+    private final String orange = "-fx-fill: rgb(240,125,0)";
+    private final String green = "-fx-fill: rgb(0,175,0)";
+    private final String blue = "-fx-fill: rgb(0,0,255)";
+    private final String black = "-fx-fill: rgb(0,0,0)";
 
     private int offset = 15;
 

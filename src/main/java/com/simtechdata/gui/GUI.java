@@ -10,8 +10,6 @@ import javafx.application.Platform;
 import javafx.beans.binding.BooleanBinding;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
 import javafx.event.Event;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
@@ -31,9 +29,7 @@ import org.jsoup.select.Elements;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.net.URL;
-import java.net.URLConnection;
 import java.util.*;
 import java.util.concurrent.*;
 
@@ -50,20 +46,19 @@ public class GUI {
     private ListView<VBox> listViewLeft;
     private ListView<VBox> listViewRight;
     private Label lblQue;
-    private ConsoleOutput consoleOutput = new ConsoleOutput();
+    private final ConsoleOutput consoleOutput = new ConsoleOutput();
     private int jobQueSize = 0;
     private int max = AppSettings.GET.threads();
-    private Stage stage;
+    private final Stage stage;
     private boolean ready = false;
     private Spinner<Integer> spinThreads;
     private final CopyOnWriteArrayList<Download> jobQue = new CopyOnWriteArrayList<>();
-    private BooleanProperty stop = new SimpleBooleanProperty(true);
-    private BooleanProperty started = new SimpleBooleanProperty(false);
+    private final BooleanProperty stop = new SimpleBooleanProperty(true);
+    private final BooleanProperty started = new SimpleBooleanProperty(false);
     private ExecutorService exec;
-    private ExecutorService execStop = new ThreadPoolExecutor(20, 20, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingDeque<>());
-    private ExecutorService sizeExec = new ThreadPoolExecutor(1, 1, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingDeque<>());
-    private Map<Integer, ProgressObject> progressMap = new HashMap<>();
-    private Set<Integer> indexSet = new HashSet<>();
+    private final ExecutorService execStop = new ThreadPoolExecutor(20, 20, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingDeque<>());
+    private final Map<Integer, ProgressObject> progressMap = new HashMap<>();
+    private final Set<Integer> indexSet = new HashSet<>();
     private ProgressObject poTotals;
 
     private final Timer timer;
@@ -137,9 +132,7 @@ public class GUI {
 
     public static void setValues(int index, String label, double progress) {
         if (INSTANCE.stop.getValue().equals(false)) {
-            Platform.runLater(() -> {
-                INSTANCE.progressMap.get(index).setProgress(label, progress);
-            });
+            Platform.runLater(() -> INSTANCE.progressMap.get(index).setProgress(label, progress));
         }
     }
 
@@ -192,12 +185,8 @@ public class GUI {
         AnchorPane.setTopAnchor(spinBox,0.0);
         BooleanBinding spinBind = stop.and(started.not());
         spinBox.visibleProperty().bind(spinBind);
-        listViewLeft.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
-            listViewLeft.getSelectionModel().clearSelection();
-        });
-        listViewRight.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
-            listViewRight.getSelectionModel().clearSelection();
-        });
+        listViewLeft.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> listViewLeft.getSelectionModel().clearSelection());
+        listViewRight.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> listViewRight.getSelectionModel().clearSelection());
         EventHandler<Event> consumeHandler = Event::consume;
         listViewLeft.addEventFilter(Event.ANY, consumeHandler);
         listViewRight.addEventFilter(Event.ANY, consumeHandler);
@@ -228,7 +217,7 @@ public class GUI {
             Core.sleep(500);
             log(MessageType.ALERT, "STOPPING", "THREADS", TabType.ERROR);
             log(MessageType.ALERT, "STOPPING", "Clearing job queue", TabType.ERROR);
-            while(jobQue.size() > 0) {
+            while(!jobQue.isEmpty()) {
                 List<Download> remove = new ArrayList<>();
                 for (Download download : jobQue) {
                     execStop.submit(download.stop());
@@ -335,7 +324,7 @@ public class GUI {
             return;
         //downloadSizeList.addLast(link);
         Download download = new Download(link);
-        jobQue.addLast(download);
+        jobQue.add(download);
         exec.submit(download.start());
     }
 
@@ -347,9 +336,7 @@ public class GUI {
         INSTANCE.stage.setScene(scene);
         INSTANCE.stage.setWidth(Core.WIDTH);
         INSTANCE.stage.setHeight(Core.SCREEN_HEIGHT - 50);
-        INSTANCE.stage.setOnCloseRequest(e -> {
-            System.exit(0);
-        });
+        INSTANCE.stage.setOnCloseRequest(e -> System.exit(0));
         INSTANCE.stage.show();
     }
 

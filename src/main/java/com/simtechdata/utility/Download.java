@@ -40,8 +40,8 @@ public class Download {
     private final byte[] buffer;
     private State state;
     private Integer index;
-    private URLCon urlCon;
-    private String filePath;
+    private final URLCon urlCon;
+    private final String filePath;
     private long startTime, endTime, seconds, bytesRead, conLength;
 
 
@@ -59,12 +59,6 @@ public class Download {
                 if (!state.equals(READY)) {
                     return;
                 }
-/*
-                String folderPath = getFolderPath();
-                String webServer = getWebServer();
-                filePath = Paths.get(baseFolder, webServer, folderPath, filename).toString();
-                urlCon = new URLCon(getLink(), filePath);
-*/
                 setLabel();
                 conLength = urlCon.getConLength();
                 if (conLength <= 0) {
