@@ -13,10 +13,11 @@ import javafx.scene.input.ClipboardContent;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.text.TextFlow;
 
-import java.io.OutputStream;
-import java.io.PrintStream;
 import java.util.LinkedList;
-import java.util.concurrent.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 public class ConsoleOutput extends AnchorPane {
 
@@ -70,9 +71,6 @@ public class ConsoleOutput extends AnchorPane {
         setRightAnchor(btnClipboard, 35.0);
         setBottomAnchor(btnClipboard, 25.0);
 
-
-        setOutput();
-
         tabPane.setOnMouseClicked(e -> {
             Tab tab = tabPane.getSelectionModel().getSelectedItem();
             if (tab == tabError) {
@@ -115,11 +113,6 @@ public class ConsoleOutput extends AnchorPane {
         ClipboardContent content = new ClipboardContent();
         content.putString(sb.toString());
         clipboard.setContent(content);
-    }
-
-    private void setOutput() {
-        System.setOut(new PrintStream(new CustomOutputStream(this, false)));
-        System.setErr(new PrintStream(new CustomOutputStream(this, true)));
     }
 
     private Runnable flashErrorTab() {
@@ -169,43 +162,7 @@ public class ConsoleOutput extends AnchorPane {
         }
     }
 
-
-
-    public static class CustomOutputStream extends OutputStream {
-        public CustomOutputStream(ConsoleOutput ap, boolean error) {
-            this.ap = ap;
-            this.error = error;
-        }
-
-        private final ConsoleOutput ap;
-        private static StringBuilder sb = new StringBuilder();
-        private final boolean error;
-        private final ExecutorService executor = new ThreadPoolExecutor(1, 1, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>());
-
-        @Override
-        public void write(int b) {
-            executor.submit(() -> {
-                if (b == 10) {
-                    String line = sb.toString();
-                    if (line.contains(";")) {
-                        String tabTypeString = line.split(";")[3];
-                        if (tabTypeString != null) {
-                            TabType tabType = error ? TabType.ERROR : TabType.getType(tabTypeString);
-                            Log log = new Log(sb.toString(), tabType);
-                            ap.add(log);
-                        }
-                    }
-                    else {
-                        TabType tabType = TabType.ERROR;
-                        Log log = new Log(sb.toString(), tabType);
-                        ap.add(log);
-                    }
-                    sb = new StringBuilder();
-                }
-                else {
-                    sb.append((char) b);
-                }
-            });
-        }
+    public void send(Log log) {
+        add(log);
     }
 }

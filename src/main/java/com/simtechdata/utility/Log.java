@@ -1,14 +1,11 @@
 package com.simtechdata.utility;
 
-import com.simtechdata.enums.TabType;
 import com.simtechdata.enums.MessageType;
+import com.simtechdata.enums.TabType;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextAlignment;
 import javafx.scene.text.TextFlow;
-
-import static com.simtechdata.enums.MessageType.ALERT;
-import static com.simtechdata.enums.MessageType.NORMAL;
 
 public class Log {
     private final MessageType messageType;
@@ -16,19 +13,11 @@ public class Log {
     private final String typeMsg;
     private final String msg;
 
-    public Log(String line, TabType tabType) {
+    public Log(MessageType messageType, String typeMsg, String msg, TabType tabType) {
+        this.messageType = messageType;
+        this.typeMsg = typeMsg;
+        this.msg = msg;
         this.tabType = tabType;
-        if(line.contains(";")) {
-            String[] parts = line.split(";");
-            messageType = MessageType.getType(parts[0]);
-            typeMsg = parts[1];
-            msg = parts[2];
-        }
-        else {
-            messageType = tabType.equals(TabType.ERROR) ? ALERT : NORMAL;
-            typeMsg = "";
-            msg = line;
-        }
     }
 
     private final String red = "-fx-fill: rgb(255,0,0)";
@@ -47,7 +36,7 @@ public class Log {
         Text textType = new Text(typeString);
         Text textMsg = new Text(msg);
         Font courier = Font.font("Courier");
-        switch(messageType) {
+        switch (messageType) {
             case NORMAL -> textType.setStyle(blue);
             case MEDIUM -> textType.setStyle(orange);
             case ALERT -> textType.setStyle(red);
@@ -58,23 +47,13 @@ public class Log {
         textMsg.setFont(courier);
         textMsg.setStyle(black);
         textMsg.setWrappingWidth(Double.MAX_VALUE);
-        TextFlow tf = new TextFlow(textType,textMsg);
+        TextFlow tf = new TextFlow(textType, textMsg);
         tf.setTextAlignment(TextAlignment.LEFT);
         return tf;
     }
 
     public TabType getTabType() {
         return tabType;
-    }
-
-    public static void l(MessageType messageType, String typeMsg, String msg, TabType tabType) {
-        String line = messageType.get() + ";" + typeMsg + ";" + msg + ";" + tabType.get();
-        if(messageType.equals(ALERT)) {
-            System.err.println(line);
-        }
-        else {
-            System.out.println(line);
-        }
     }
 
     public String getMessage() {

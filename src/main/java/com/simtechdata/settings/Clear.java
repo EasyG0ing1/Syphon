@@ -23,4 +23,14 @@ public class Clear {
     public void threads() {
         prefs.remove(THREADS.name());
     }
+
+    public void urlHistory() {
+        prefs.remove(URL_HISTORY.name());
+    }
+    public void removeDuplicates() {
+        prefs.remove(REMOVE_DUPLICATES.name());
+    }
+    public void duplicateExclusions() {
+        prefs.remove(EXCLUSION_EXT.name());
+    }
 }

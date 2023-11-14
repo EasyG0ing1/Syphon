@@ -2,14 +2,15 @@ package com.simtechdata.gui;
 
 import com.simtechdata.enums.MessageType;
 import com.simtechdata.enums.TabType;
+import com.simtechdata.gui.tree.TreeForm;
 import com.simtechdata.settings.AppSettings;
-import com.simtechdata.utility.Core;
-import com.simtechdata.utility.Download;
-import com.simtechdata.utility.Log;
+import com.simtechdata.utility.*;
 import javafx.application.Platform;
 import javafx.beans.binding.BooleanBinding;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.event.Event;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
@@ -22,10 +23,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.Stage;
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
-import org.jsoup.select.Elements;
 
 import java.io.File;
 import java.io.IOException;
@@ -42,13 +40,16 @@ public class GUI {
     private TextField tfURL;
     private TextField tfFolder;
     private Button btnGo;
+    private Button btnTree;
     private Button btnStop;
     private ListView<VBox> listViewLeft;
     private ListView<VBox> listViewRight;
     private Label lblQue;
+    private ChoiceBox<String> cbHistory;
     private final ConsoleOutput consoleOutput = new ConsoleOutput();
+    //private ConsoleOutput consoleOutput;
     private int jobQueSize = 0;
-    private int max = AppSettings.GET.threads();
+    private int max = AppSettings.get.threads();
     private final Stage stage;
     private boolean ready = false;
     private Spinner<Integer> spinThreads;
@@ -106,12 +107,13 @@ public class GUI {
         vbox.setSpacing(5);
         splitPane = new SplitPane();
         splitPane.getItems().addAll(vbox, consoleOutput);
+        //splitPane.getItems().addAll(vbox);
         splitPane.setOrientation(javafx.geometry.Orientation.VERTICAL);
         splitPane.setDividerPosition(0, .71);
     }
 
     private void makeProgressControls() {
-        int top = AppSettings.GET.threads();
+        int top = AppSettings.get.threads();
         int midPoint = top / 2;
         listViewLeft.getItems().clear();
         listViewRight.getItems().clear();
@@ -120,7 +122,7 @@ public class GUI {
             po.setPrefWidth(Core.WIDTH * .4);
             po.setPrefHeight(45);
             progressMap.put(x, po);
-            if(x <= midPoint) {
+            if (x <= midPoint) {
                 listViewLeft.getItems().add(po);
             }
             else {
@@ -152,61 +154,91 @@ public class GUI {
         }
         return null;
     }
+
+    private void setHistory() {
+        String rawData = AppSettings.get.urlHistory();
+        String[] array = rawData.split(";");
+        ObservableList<String> list = FXCollections.observableArrayList(Arrays.asList(array));
+        Platform.runLater(() -> cbHistory.setItems(list));
+    }
     private HBox getURLField() {
         Label label = new Label("URL");
         label.setPrefWidth(50);
-        Label lblSpin = new Label("Download Threads");
-        lblSpin.setPrefWidth(110);
-        spinThreads = new Spinner<>(1,20,1);
-        spinThreads.setEditable(false);
-        spinThreads.getValueFactory().setValue(AppSettings.GET.threads());
-        spinThreads.getValueFactory().valueProperty().addListener(((observableValue, oldValue, newValue) -> {
-            AppSettings.SET.threads(newValue);
-            max = newValue;
-            makeProgressControls();
-        }));
-        spinThreads.setPrefWidth(70);
-        HBox spinBox = new HBox(5, lblSpin, spinThreads);
-        spinBox.setPadding(new Insets(0));
-        tfURL = newTextField(AppSettings.GET.lastURL(), "Full URL to top folder");
+        cbHistory = new ChoiceBox<>();
+        setHistory();
+        cbHistory.setPrefWidth(300);
+        cbHistory.setOnAction(e->{
+            String url = cbHistory.getValue();
+            AppSettings.set.urlHistory(tfURL.getText());
+            Platform.runLater(() -> tfURL.setText(url));
+        });
+        tfURL = newTextField(AppSettings.get.lastURL(), "Full URL to top folder");
         tfURL.setOnAction(e -> start());
         tfURL.disableProperty().bind(stop.not());
+        tfURL.focusedProperty().addListener(((observable, oldValue, newValue) -> {
+            String url = tfURL.getText();
+            AppSettings.set.lastURL(url);
+            setHistory();
+        }));
+        tfURL.setPrefWidth(800);
+        btnTree  = new Button("Tree View");
+        btnTree.setOnAction(e->{
+            String url = tfURL.getText();
+            AppSettings.set.lastURL(url);
+            Element link = new Element(url).html(url);
+            new TreeForm(new Link(link));
+        });
+        btnTree.setPrefWidth(75);
         btnGo = new Button("Go");
         btnGo.setOnAction(e -> start());
         btnGo.setPrefWidth(55);
-        lblQue = new Label();
-        lblQue.setPrefWidth(200);
-        AnchorPane ap = new AnchorPane(lblQue, spinBox);
-        ap.setPrefWidth(200);
-        ap.setPrefHeight(30);
-        AnchorPane.setLeftAnchor(lblQue,0.0);
-        AnchorPane.setTopAnchor(lblQue,0.0);
-        AnchorPane.setLeftAnchor(spinBox,0.0);
-        AnchorPane.setTopAnchor(spinBox,0.0);
-        BooleanBinding spinBind = stop.and(started.not());
-        spinBox.visibleProperty().bind(spinBind);
         listViewLeft.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> listViewLeft.getSelectionModel().clearSelection());
         listViewRight.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> listViewRight.getSelectionModel().clearSelection());
         EventHandler<Event> consumeHandler = Event::consume;
         listViewLeft.addEventFilter(Event.ANY, consumeHandler);
         listViewRight.addEventFilter(Event.ANY, consumeHandler);
-        return newHBox(label, tfURL, btnGo, ap);
+        return newHBox(label, tfURL, cbHistory, btnTree, btnGo);
     }
 
     private HBox getFolderField() {
         Label label = new Label("Folder");
         label.setPrefWidth(50);
-        tfFolder = newTextField(AppSettings.GET.lastFolder(), "Path to mirror path structure");
+        tfFolder = newTextField(Core.baseFolder, "Path to mirror path structure");
         tfFolder.disableProperty().bind(stop.not());
-        Button btnSet = new Button("Set");
-        btnSet.setPrefWidth(55);
+        tfFolder.setPrefWidth(800);
+        Button btnSet = new Button("Choose");
+        btnSet.setPrefWidth(75);
         btnSet.setOnAction(e -> getFolder());
         btnSet.disableProperty().bind(stop.not());
         btnStop = new Button("Stop");
         btnStop.setPrefWidth(55);
         btnStop.setOnAction(e -> stop());
         btnStop.visibleProperty().bind(stop.not());
-        return newHBox(label, tfFolder, btnSet, btnStop);
+        Label lblSpin = new Label("Download Threads");
+        lblSpin.setPrefWidth(110);
+        spinThreads = new Spinner<>(1, 20, 1);
+        spinThreads.setEditable(false);
+        spinThreads.getValueFactory().setValue(AppSettings.get.threads());
+        spinThreads.getValueFactory().valueProperty().addListener(((observableValue, oldValue, newValue) -> {
+            AppSettings.set.threads(newValue);
+            max = newValue;
+            makeProgressControls();
+        }));
+        spinThreads.setPrefWidth(70);
+        HBox spinBox = new HBox(5, lblSpin, spinThreads);
+        spinBox.setPadding(new Insets(0));
+        BooleanBinding spinBind = stop.and(started.not());
+        spinBox.visibleProperty().bind(spinBind);
+        lblQue = new Label();
+        lblQue.setPrefWidth(200);
+        AnchorPane ap = new AnchorPane(lblQue, spinBox);
+        ap.setPrefWidth(200);
+        ap.setPrefHeight(30);
+        AnchorPane.setLeftAnchor(lblQue, 0.0);
+        AnchorPane.setTopAnchor(lblQue, 0.0);
+        AnchorPane.setLeftAnchor(spinBox, 0.0);
+        AnchorPane.setTopAnchor(spinBox, 0.0);
+        return newHBox(label, tfFolder, btnSet, btnStop, ap);
     }
 
     private void stop() {
@@ -217,7 +249,7 @@ public class GUI {
             Core.sleep(500);
             log(MessageType.ALERT, "STOPPING", "THREADS", TabType.ERROR);
             log(MessageType.ALERT, "STOPPING", "Clearing job queue", TabType.ERROR);
-            while(!jobQue.isEmpty()) {
+            while (!jobQue.isEmpty()) {
                 List<Download> remove = new ArrayList<>();
                 for (Download download : jobQue) {
                     execStop.submit(download.stop());
@@ -230,7 +262,7 @@ public class GUI {
             }
             Core.sleep(500);
             log(MessageType.ALERT, "STOPPING", "Shutting down thread pool", TabType.ERROR);
-            while(!exec.isShutdown()) {
+            while (!exec.isShutdown()) {
                 exec.shutdownNow();
             }
             exec.close();
@@ -245,7 +277,8 @@ public class GUI {
     }
 
     private void log(MessageType messageType, String typeMsg, String msg, TabType tabType) {
-        Log.l(messageType, typeMsg, msg, tabType);
+        Log log = new Log(messageType, typeMsg, msg, tabType);
+        sendLog(log);
     }
 
     private TextField newTextField(String text, String promptText) {
@@ -265,15 +298,17 @@ public class GUI {
 
     private void getFolder() {
         DirectoryChooser dc = new DirectoryChooser();
-        dc.setInitialDirectory(new File(AppSettings.GET.lastFolder()));
+        dc.setInitialDirectory(new File(AppSettings.get.lastFolder()));
         File folder = dc.showDialog(null);
         if (folder != null) {
-            AppSettings.SET.lastFolder(folder.getAbsolutePath());
+            AppSettings.set.lastFolder(folder.getAbsolutePath());
             tfFolder.setText(folder.getAbsolutePath());
         }
     }
 
     private long startTime, endTime;
+    private int completeCount = 0;
+
     private TimerTask reportQueSize() {
         return new TimerTask() {
             @Override
@@ -283,8 +318,9 @@ public class GUI {
                 jobQueSize = jobQue.size();
                 double total = Core.getTotal();
                 double downloaded = Core.getDownloaded();
+                double downloadedThisSession = Core.getDownloadedThisSession();
                 double progress = downloaded / total;
-                double bps = downloaded / seconds;
+                double bps = downloadedThisSession / seconds;
                 String bpsString = getAmount(bps) + "B/s";
                 String totalString = getAmount(total);
                 String downloadedString = getAmount(downloaded);
@@ -294,8 +330,23 @@ public class GUI {
                     progressMap.get(0).setProgress(message, progress);
                     lblQue.setText("Job Que: " + jobQueSize + " (" + Core.getFilesDownloaded() + " downloaded)");
                 });
-                if(stop.getValue().equals(true) && jobQueSize == 0) {
+                if (stop.getValue().equals(true) && jobQueSize == 0) {
                     timer.cancel();
+                }
+                if (progress >= 1.0) {
+                    completeCount++;
+                }
+                else {
+                    completeCount = 0;
+                }
+                if (completeCount > 10) {
+                    timer.cancel();
+                    stop.setValue(true);
+                    Core.reset();
+                    Platform.runLater(() -> {
+                        progressMap.get(0).setProgress("",0.0);
+                        lblQue.setText("Job Que: " + 0 + " (" + 0 + " downloaded)");
+                    });
                 }
             }
         };
@@ -319,13 +370,102 @@ public class GUI {
         return String.format("%.2f", amountRemaining) + unit;
     }
 
-    public void addDownload(Element link) {
+    public void addDownload(Link link) {
         if (stop.getValue().equals(true))
             return;
-        //downloadSizeList.addLast(link);
         Download download = new Download(link);
         jobQue.add(download);
         exec.submit(download.start());
+    }
+
+    public static void startTreeDownloads() {
+        INSTANCE.startSelectDownloads();
+    }
+
+    private boolean setDownload = false;
+    private void startSelectDownloads() {
+        setDownload = true;
+        int tSize = spinThreads.getValue();
+        int jobSize = Core.downloadSet.size();
+        if (jobSize < tSize)
+            spinThreads.getValueFactory().setValue(jobSize);
+        if (initDownloads()) {
+            for (Download download : Core.downloadSet) {
+                if (stop.getValue().equals(true))
+                    return;
+                jobQue.add(download);
+                exec.submit(download.start());
+            }
+        }
+    }
+
+    private boolean initDownloads() {
+        Core.baseFolder = tfFolder.getText();
+        if (!Core.baseFolderExists()) {
+            log(MessageType.ALERT, "BASE FOLDER GONE", Core.baseFolder, TabType.ERROR);
+            return false;
+        }
+        exec = new ThreadPoolExecutor(max, max, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingDeque<>());
+        stop.setValue(false);
+        started.setValue(true);
+        timer.scheduleAtFixedRate(reportQueSize(), 1000, 750);
+        startTime = System.currentTimeMillis();
+        String urlLink = tfURL.getText();
+        AppSettings.set.lastURL(urlLink);
+        setHistory();
+        Platform.runLater(() -> btnGo.setDisable(true));
+        return true;
+    }
+
+    private void start() {
+        if(setDownload) {
+            startSelectDownloads();
+            return;
+        }
+        if (initDownloads()) {
+            try {
+                String urlLink = tfURL.getText();
+                URL url = new URL(urlLink);
+                if (url.openConnection() != null) {
+                    Element element = new Element(urlLink).html(urlLink);
+                    Links list = Core.getLinks(element);
+                    new Thread(() -> {
+                        for (Link link : list) {
+                            if (stop.getValue().equals(true))
+                                return;
+                            if (link.isFolder()) {
+                                getContent(link);
+                            }
+                            else if (link.isFile()) {
+                                addDownload(link);
+                            }
+                        }
+                    }).start();
+                }
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+    }
+
+    private void getContent(Link src) {
+        if (src.isFolder()) {
+            Element element = new Element(src.getUrlString()).html(src.getUrlString());
+            Links links = Core.getLinks(element);
+            for (Link link : links) {
+                if (stop.getValue().equals(true)) {
+                    return;
+                }
+                if (link.isValid()) {
+                    if (link.isFolder()) {
+                        getContent(link);
+                    }
+                    else {
+                        addDownload(link);
+                    }
+                }
+            }
+        }
     }
 
     public static void show() {
@@ -340,62 +480,7 @@ public class GUI {
         INSTANCE.stage.show();
     }
 
-    private void start() {
-        exec = new ThreadPoolExecutor(max, max, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingDeque<>());
-        stop.setValue(false);
-        started.setValue(true);
-        timer.scheduleAtFixedRate(reportQueSize(), 1000, 750);
-        startTime = System.currentTimeMillis();
-        Platform.runLater(() -> btnGo.setDisable(true));
-        String urlFolder = tfFolder.getText();
-        if (!urlFolder.endsWith("/"))
-            urlFolder += "/";
-        Core.baseFolder = urlFolder;
-        try {
-            stop.setValue(false);
-            String urlString = tfURL.getText();
-            AppSettings.SET.lastURL(urlString);
-            URL url = new URL(urlString);
-            if (url.openConnection() != null) {
-                Document doc = Jsoup.connect(urlString).get();
-                Elements links = doc.select("a[href]");
-                LinkedList<Element> list = new LinkedList<>(links);
-                list.sort(Comparator.comparing(Element::wholeText).reversed());
-                new Thread(() -> {
-                    for (Element link : list) {
-                        if (stop.getValue().equals(true))
-                            return;
-                        if (Core.isFolder(link)) {
-                            getFolders(link);
-                        }
-                    }
-                }).start();
-            }
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    private void getFolders(Element element) {
-        if (Core.isFolder(element)) {
-            try {
-                Document doc = Jsoup.connect(Core.getFullURL(element)).get();
-                Elements links = doc.select("a[href]");
-                for (Element link : links) {
-                    if (stop.getValue().equals(true))
-                        return;
-                    if (Core.isValidLink(link)) {
-                        if (Core.isFolder(link)) {
-                            getFolders(link);
-                        }
-                        else {
-                            addDownload(link);
-                        }
-                    }
-                }
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        }
+    public static void sendLog(Log log) {
+        INSTANCE.consoleOutput.send(log);
     }
 }

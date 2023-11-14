@@ -10,25 +10,26 @@ import java.net.URLConnection;
 
 public class URLCon {
 
+    private final Link link;
     private final String urlPath;
     private URLConnection con;
     private final long conLength;
     private URL url = null;
     private final String filePath;
     private final long fileLength;
+    private boolean fileExists = false;
     private final String USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/56.0.2924.87 Safari/537.36";
-    private boolean resume = false;
 
-    public URLCon(String urlPath, String filePath) {
-        this.filePath = filePath;
+    public URLCon(Link link) {
+        this.link = link;
+        this.filePath = link.getFilePath();
         this.fileLength = setFileLength();
-        this.urlPath = urlPath;
+        this.urlPath = link.getUrlString();
         this.con = getURLConnection();
-        this.conLength = con.getContentLength();
-        if(filePath == null) {
-            System.err.println("File Path is null");
-        }
+        this.conLength = getServerFileLength();
+        Core.addDownloaded(this.fileLength);
     }
+
 
     private URLConnection getURLConnection() {
         try {
@@ -41,14 +42,35 @@ public class URLCon {
         }
     }
 
+    private long getServerFileLength() {
+        long length = con.getContentLength();
+        return length <= 0 ? 0 : length;
+    }
+
+    private void setCon() {
+        try {
+            if (resume()) {
+                con = url.openConnection();
+                con.setRequestProperty("Range", "bytes=" + fileLength + "-");
+            }
+            else if (fileNeedsDownloading()) {
+                con = url.openConnection();
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     private long setFileLength() {
         File file = new File(filePath);
         long fileLength = 0;
         try {
             if (file.exists()) {
                 fileLength = file.length();
+                fileExists = true;
                 if (fileLength <= 0) {
                     FileUtils.forceDelete(file);
+                    fileExists = false;
                     fileLength = 0;
                 }
             }
@@ -61,35 +83,28 @@ public class URLCon {
         return fileLength;
     }
 
-    public long getFileLength() {
-        return fileLength;
+    public boolean fileNeedsDownloading() {
+        return (resume() || !fileExists);
     }
 
     private boolean resume() {
-        return fileLength > 0 && (fileLength < conLength);
+        return fileExists && (conLength == 0 || (conLength > fileLength));
+    }
+
+    public long getFileLength() {
+        return fileLength;
     }
 
     public long getConLength() {
         return conLength;
     }
 
-    public void checkResume() {
-        try {
-            if (resume()) {
-                con = url.openConnection();
-                con.setRequestProperty("Range", "bytes=" + fileLength + "-");
-                resume = true;
-            }
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    public boolean fileResuming() {
-        return resume;
+    public boolean resumeDownload() {
+        return resume();
     }
 
     public InputStream getInputStream() throws IOException {
+        setCon();
         return con.getInputStream();
     }
 

@@ -6,15 +6,6 @@ public enum MessageType {
     ALERT,
     ACTION;
 
-    public static MessageType getType(String typeString) {
-        return switch(typeString) {
-            case "MEDIUM" -> MEDIUM;
-            case "ALERT" -> ALERT;
-            case "ACTION" -> ACTION;
-            default -> NORMAL;
-        };
-    }
-
     public String get() {
         return switch(this) {
             case ALERT -> "ALERT";
