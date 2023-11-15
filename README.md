@@ -1,10 +1,16 @@
-## WebPath Crawler
+## Syphon
 
-WebPath Crawler is a program that allows you to paste in a URL of any folder on a web server and as long as that server has directory listing enabled, then the entire folder tree including the files within the folders from that point downward will be mirrored on your local hard drive.
+Syphon is a program that allows you to paste in a URL of any folder on a web server and as long as that server has directory listing enabled, then the entire folder tree including the files within the folders from that point downward will be mirrored on your local hard drive.
 
-As it traverses all of the folders and catalogs the files, it submits the download jobs into a queue where 20 file downloads will happen simultaneously (adjustable with a spinner), thus speeding up the process.
+You also have the option of loading the folder structure into a tree view where you can select which files you wish to download.
 
-Also, if the transfer of files is interrupted for any reason, the next time you start the jobs, it will resume files that are not fully downloaded and pick up the download where it left off.
+Simply putting in a URL then pressing GO will cause the program to traverse that folder and it will recursively scour all of the folders and subfolders and as it finds files, it will add them to a que where it starts downloading as soon as the first file hits the queue.
+
+The queue submits the jobs to a Java Thread manager which has a max base pool of 20 threads. However, you can change the number of threads from 1 to 20.
+
+![MainScreen](./Images/MainScreen.png)
+
+![TreeScreen](./Images/TreeScreen.png)
 
 When you set a folder for downloading, I recommend creating a folder called something like `Websites` as the program will first create a folder that is the name of the web server you're downloading from (www.server.com) then it will create the tree mirror underneath that folder.
 

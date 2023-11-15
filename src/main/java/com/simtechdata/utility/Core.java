@@ -21,6 +21,8 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.concurrent.ConcurrentLinkedDeque;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.DoubleAdder;
@@ -46,10 +48,30 @@ public class Core {
     public static String baseFolder = AppSettings.get.lastFolder();
     public static final IntegerProperty SELECTED_COUNT = new SimpleIntegerProperty(0);
     public static final LongProperty SELECTED_BYTES = new SimpleLongProperty(0);
+    private static final AtomicLong Selected_Count = new AtomicLong();
+    private static final AtomicLong Selected_Bytes = new AtomicLong();
     private static final Map<String, Integer> countMap = new HashMap<>();
     public static Set<Download> downloadSet = new HashSet<>();
 
-
+    private static boolean monitorStarted = false;
+    public static void startMonitor() {
+        if(!monitorStarted) {
+            new Thread(() -> {
+                while(true) {
+                    SELECTED_BYTES.setValue(Selected_Bytes.get());
+                    SELECTED_COUNT.setValue(Selected_Count.get());
+                    sleep(500);
+                }
+            }).start();
+            monitorStarted = true;
+        }
+    }
+    public static void addSelectedCount(long num) {
+        Selected_Count.addAndGet(num);
+    }
+    public static void addBytesSelected(long num) {
+        Selected_Bytes.addAndGet(num);
+    }
 
     public static void reset() {
         FILES_DOWNLOADED.set(0);
@@ -104,16 +126,6 @@ public class Core {
         if (fullURL.charAt(0) == '/')
             return fullURL.replaceFirst("/", "");
         return fullURL;
-    }
-
-    public static Links getLinks(Element link) {
-        try {
-            Document doc = Jsoup.connect(getURLString(link)).get();
-            Elements elements = doc.select("a[href]");
-            return new Links(elements);
-        } catch (IOException ignored) {
-        }
-        return new Links();
     }
 
     public static void addCount(String name) {

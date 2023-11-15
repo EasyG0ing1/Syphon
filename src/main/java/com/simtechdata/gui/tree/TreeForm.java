@@ -69,15 +69,13 @@ public class TreeForm {
         treeView.setOnMouseClicked(e -> {
             if (e.getClickCount() >= 2) {
                 TreeItem<ItemClass> treeItem = treeView.getSelectionModel().getSelectedItem();
-                new Thread(() -> {
-                    if (!treeItem.getValue().isFile()) {
-                        for (TreeItem<ItemClass> ti : treeItem.getChildren()) {
-                            if (ti.getValue().isFile())
-                                Platform.runLater(() -> ti.getValue().toggleSelected());
-                        }
-                    }
-                    treeItem.setExpanded(true);
-                }).start();
+                Platform.runLater(() -> lblMsg.setText("Selecting Items"));
+                for(TreeItem<ItemClass> leaf : treeItem.getChildren()) {
+                    if(leaf.getValue().isFile())
+                        new Thread(() -> leaf.getValue().toggleSelected()).start();
+                }
+                treeItem.setExpanded(true);
+                Platform.runLater(() -> lblMsg.setText("Selection Done"));
             }
         });
         splitPane = new SplitPane();
@@ -89,6 +87,17 @@ public class TreeForm {
         SELECTED_BYTES.bind(Core.SELECTED_BYTES);
         SELECTED_COUNT.addListener(((observable, oldValue, newValue) -> Platform.runLater(() -> lblItemCount.setText(String.valueOf(newValue)))));
         SELECTED_BYTES.addListener(((observable, oldValue, newValue) -> Platform.runLater(() -> lblTotalSize.setText(Core.f((long) newValue)))));
+    }
+
+    private Runnable selectFiles(TreeItem<ItemClass> treeItem) {
+        return () ->{
+            for(TreeItem<ItemClass> leaf : treeItem.getChildren()) {
+                if(leaf.getValue().isFile())
+                    leaf.getValue().toggleSelected();
+                bumpProgress();
+                Core.sleep(10);
+            }
+        };
     }
 
     public void buildTree(TreeItem<ItemClass> treeItem, Link topLink) {
@@ -200,6 +209,7 @@ public class TreeForm {
                 stage.setOnCloseRequest(e -> stop = true);
                 stage.show();
             });
+            Core.startMonitor();
             itemsAdded = 0.0;
             totalItems = parentLink.getLinks().size();
             activeThread = Thread.currentThread().getName();
@@ -231,7 +241,7 @@ public class TreeForm {
         lblItemInfo.setPrefWidth(65);
         lblItemInfo.setAlignment(Pos.CENTER_LEFT);
         lblItemCount = newLabel("");
-        lblItemCount.setPrefWidth(20);
+        lblItemCount.setPrefWidth(45);
         lblTotalSize = newLabel("");
         lblTotalSize.setPrefWidth(125);
         Label lblRemoveDupes = newLabel("Remove Duplicates");

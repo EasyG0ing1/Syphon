@@ -20,7 +20,7 @@ public class ProgressObject extends VBox {
         pBar.setProgress(0.0);
         pBar.setPrefWidth(Core.WIDTH * .968);
         pBar.setPrefHeight(height / 3);
-        lblFile = new Label("WAITING");
+        lblFile = new Label("READY");
         lblFile.setPrefWidth(Core.WIDTH * .968);
         lblFile.setPrefHeight(height / 2);
         getChildren().addAll(lblFile, pBar);
@@ -41,7 +41,7 @@ public class ProgressObject extends VBox {
     }
 
     public void clear() {
-        lblFile.setText("WAITING");
+        lblFile.setText("READY");
         pBar.setProgress(0.0);
     }
 }

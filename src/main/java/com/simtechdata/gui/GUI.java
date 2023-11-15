@@ -387,8 +387,6 @@ public class GUI {
         setDownload = true;
         int tSize = spinThreads.getValue();
         int jobSize = Core.downloadSet.size();
-        if (jobSize < tSize)
-            spinThreads.getValueFactory().setValue(jobSize);
         if (initDownloads()) {
             for (Download download : Core.downloadSet) {
                 if (stop.getValue().equals(true))
@@ -396,10 +394,13 @@ public class GUI {
                 jobQue.add(download);
                 exec.submit(download.start());
             }
+            Core.downloadSet.clear();
+            setDownload = false;
         }
     }
 
     private boolean initDownloads() {
+        jobQue.clear();
         Core.baseFolder = tfFolder.getText();
         if (!Core.baseFolderExists()) {
             log(MessageType.ALERT, "BASE FOLDER GONE", Core.baseFolder, TabType.ERROR);
@@ -428,9 +429,10 @@ public class GUI {
                 URL url = new URL(urlLink);
                 if (url.openConnection() != null) {
                     Element element = new Element(urlLink).html(urlLink);
-                    Links list = Core.getLinks(element);
+                    Link lnk = new Link(element);
+                    Links links = lnk.getLinks();
                     new Thread(() -> {
-                        for (Link link : list) {
+                        for (Link link : links) {
                             if (stop.getValue().equals(true))
                                 return;
                             if (link.isFolder()) {
@@ -451,7 +453,8 @@ public class GUI {
     private void getContent(Link src) {
         if (src.isFolder()) {
             Element element = new Element(src.getUrlString()).html(src.getUrlString());
-            Links links = Core.getLinks(element);
+            Link lnk = new Link(element);
+            Links links = lnk.getLinks();
             for (Link link : links) {
                 if (stop.getValue().equals(true)) {
                     return;

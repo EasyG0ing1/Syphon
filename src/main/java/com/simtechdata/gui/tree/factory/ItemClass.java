@@ -49,8 +49,8 @@ public class ItemClass implements Serializable {
                         Core.downloadSet.add(download);
                         int count = Core.SELECTED_COUNT.get();
                         long totalBytes = Core.SELECTED_BYTES.getValue();
-                        Core.SELECTED_COUNT.setValue(count + 1);
-                        Core.SELECTED_BYTES.setValue(totalBytes + fileSize);
+                        Core.addSelectedCount(1);
+                        Core.addBytesSelected(fileSize);
                     }
                     else {
                         download = null;
@@ -62,13 +62,14 @@ public class ItemClass implements Serializable {
                         download = null;
                         int count = Core.SELECTED_COUNT.get();
                         long totalBytes = Core.SELECTED_BYTES.getValue();
-                        Core.SELECTED_COUNT.setValue(count - 1);
-                        Core.SELECTED_BYTES.setValue(totalBytes - fileSize);
+                        Core.addSelectedCount(-1);
+                        Core.addBytesSelected(fileSize * -1);
                     }
                 }
             }));
             new Thread(() -> {
                 try {
+                    Core.sleep(10);
                     if(fileSize == -1) {
                         URL url = new URL(link.getUrlString());
                         URLConnection con = url.openConnection();
