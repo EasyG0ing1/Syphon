@@ -66,8 +66,8 @@ public enum OS {
 
     public static String getDataPath() {
         String path = OS.isWindows() ?
-                Paths.get(System.getenv("LOCALAPPDATA"), "WebPathCrawler").toAbsolutePath().toString() :
-                Paths.get(System.getProperty("user.home"), ".webPathCrawler").toAbsolutePath().toString();
+                Paths.get(System.getenv("LOCALAPPDATA"), "Syphon").toAbsolutePath().toString() :
+                Paths.get(System.getProperty("user.home"), ".syphon").toAbsolutePath().toString();
 
         jsonDataPath = Paths.get(path, jsonData).toAbsolutePath().toString();
 
