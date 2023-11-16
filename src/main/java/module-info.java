@@ -13,5 +13,6 @@ module Syphon {
     exports com.simtechdata.gui.tree;
     exports com.simtechdata.gui.tree.factory;
     exports com.simtechdata.utility;
+    exports com.simtechdata.experiment;
 
 }

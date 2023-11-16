@@ -2,7 +2,6 @@ target/
 !.mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/
-/src/main/java/com/simtechdata/ChatItem.java
 
 ### IntelliJ IDEA ###
 .idea/modules.xml
@@ -38,3 +37,4 @@ build/
 ### Mac OS ###
 .DS_Store
 /OriginalArtwork/
+/src/main/java/com/simtechdata/experiment/
