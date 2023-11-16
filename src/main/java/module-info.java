@@ -1,4 +1,4 @@
-module WebPathCrawler {
+module Syphon {
     requires org.apache.commons.io;
     requires org.jsoup;
     requires javafx.graphics;

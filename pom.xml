@@ -5,20 +5,25 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.simtechdata</groupId>
-    <artifactId>WebPathCrawler</artifactId>
+    <artifactId>Syphon</artifactId>
     <version>1.0.0</version>
 
     <properties>
-        <maven.compiler.release>21</maven.compiler.release>
+        <maven.compiler.release>20</maven.compiler.release>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <mainClass>com.simtechdata.Main</mainClass>
         <javafx.version>21-ea+24</javafx.version>
         <maven-jar-plugin>3.3.0</maven-jar-plugin>
         <versions-maven-plugin>2.16.1</versions-maven-plugin>
         <javapackager>1.7.5</javapackager>
-        <gluonfx-maven-plugin>1.0.21</gluonfx-maven-plugin>
+        <gluonfx-maven-plugin.version>1.0.21</gluonfx-maven-plugin.version>
         <javafx-maven-plugin>0.0.8</javafx-maven-plugin>
         <maven-surefire-plugin>3.2.2</maven-surefire-plugin>
+        <resource-config-file/>
+        <system-linker-arg/>
+        <system-native-image-arg/>
+        <compatibility-arg/>
+        <package.type/>
     </properties>
 
     <dependencies>
@@ -47,51 +52,15 @@
             <artifactId>commons-io</artifactId>
             <version>2.15.0</version>
         </dependency>
-        <dependency>
-            <groupId>org.graalvm.nativeimage</groupId>
-            <artifactId>library-support</artifactId>
-            <version>23.1.1</version>
-        </dependency>
     </dependencies>
 
 
      <build>
         <plugins>
-            <!--Maven Versions-->
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>versions-maven-plugin</artifactId>
-                <version>${versions-maven-plugin}</version>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>display-dependency-updates</goal>
-                            <goal>display-plugin-updates</goal>
-                            <goal>property-updates-report</goal>
-                            <goal>dependency-updates-report</goal>
-                            <goal>plugin-updates-report</goal>
-                            <goal>update-properties</goal>
-                            <goal>use-latest-versions</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.8.1</version>
-            </plugin>
-
-            <plugin>
-                <groupId>com.gluonhq</groupId>
-                <artifactId>gluonfx-maven-plugin</artifactId>
-                <version>${gluonfx-maven-plugin}</version>
-                <configuration>
-                    <graalvmHome>/Library/Java/JavaVirtualMachines/graalvm20/Contents/Home</graalvmHome>
-                    <mainClass>${mainClass}</mainClass>
-                    <nativeImageArgs>--add-exports=org.graalvm.compiler.options/com.oracle.svm.core=ALL-UNNAMED</nativeImageArgs>
-                    <nativeImageArgs>--add-exports=org.graalvm.nativeimage.builder/com.oracle.svm.core=ALL-UNNAMED</nativeImageArgs>
-                </configuration>
+                <version>3.11.0</version>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -110,7 +79,37 @@
                     <mainClass>${mainClass}</mainClass>
                 </configuration>
             </plugin>
-
+            <!-- GUI native image builder plugin-->
+            <plugin>
+                <groupId>com.gluonhq</groupId>
+                <artifactId>gluonfx-maven-plugin</artifactId>
+                <version>${gluonfx-maven-plugin.version}</version>
+                <configuration>
+                    <mainClass>${mainClass}</mainClass>
+                    <linkerArgs>
+                        <arg>${system-linker-arg}</arg>
+                    </linkerArgs>
+                    <nativeImageArgs>
+                        <arg>--enable-url-protocols=https</arg>
+                        <arg>--enable-url-protocols=http</arg>
+                        <arg>--no-fallback</arg>
+                        <arg>--verbose</arg>
+                        <arg>--add-exports=org.graalvm.nativeimage.builder/com.oracle.svm.core.jdk=ALL-UNNAMED</arg>
+                        <arg>${system-native-image-arg}</arg>
+                        <arg>${compatibility-arg}</arg>
+                    </nativeImageArgs>
+                    <appIdentifier>${mainClass}</appIdentifier>
+                    <releaseConfiguration>
+                        <vendor>Syphon</vendor>
+                        <description>Syphon is a program that will crawl a web server and recursively traverse all of its folders and download files either in total, or selectively</description>
+                        <packageType>${package.type}</packageType>
+                        <bundleShortVersion>${project.version}</bundleShortVersion>
+                        <bundleVersion>${project.version}</bundleVersion>
+                        <!-- for macOS/iOS -->
+                        <skipSigning>true</skipSigning>
+                    </releaseConfiguration>
+                </configuration>
+            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
@@ -139,4 +138,32 @@
         </plugins>
     </build>
 
+    <profiles>
+        <!-- [macOS] GUI native image builder profile -->
+        <profile>
+            <id>build-for-macos-latest</id>
+            <properties>
+                <package.type>pkg</package.type>
+                <system-native-image-arg>-Dsvm.platform=org.graalvm.nativeimage.Platform$MACOS_AMD64</system-native-image-arg>
+                <system-linker-arg>${pom.basedir}/config/missing_symbols-macos-latest.o</system-linker-arg>
+                <mac.app.store>true</mac.app.store>
+            </properties>
+        </profile>
+        <!-- [Linux] GUI native image builder profile -->
+        <profile>
+            <id>build-for-ubuntu-latest</id>
+            <properties>
+                <system-linker-arg>${pom.basedir}/config/missing_symbols-ubuntu-latest.o</system-linker-arg>
+                <compatibility-arg>-march=compatibility</compatibility-arg>
+            </properties>
+        </profile>
+        <!-- [Windows] GUI native image builder profile -->
+        <profile>
+            <id>build-for-windows-latest</id>
+            <properties>
+                <package.type>msi</package.type>
+                <system-linker-arg>${pom.basedir}/config/missing_symbols-windows-latest.o</system-linker-arg>
+            </properties>
+        </profile>
+    </profiles>
 </project>
