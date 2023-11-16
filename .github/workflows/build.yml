@@ -54,14 +54,12 @@ jobs:
         if: ${{ matrix.os == 'windows-latest' }}
         run: |
           Rename-Item target/gluonfx/x86_64-windows/Syphon-1.0.msi "Syphon.msi"
-          Rename-Item target/gluonfx/x86_64-windows/Syphon.exe "Syphon.exe"
           move "target/gluonfx/x86_64-windows/Syphon.msi" App
           move "target/gluonfx/x86_64-windows/Syphon.exe" App
       - name: Categorise build artifacts for macOS
         if: ${{ matrix.os == 'macos-latest' }}
         run: |
           mv target/gluonfx/x86_64-darwin/Syphon-1.0.0.pkg "target/gluonfx/x86_64-darwin/Syphon.pkg"
-          mv target/gluonfx/x86_64-darwin/Syphon.app "target/gluonfx/x86_64-darwin/Syphon.app"
           mv "target/gluonfx/x86_64-darwin/Syphon.pkg" App
           mv "target/gluonfx/x86_64-darwin/Syphon.app" App
       - name: Tar build files # To prevent file permission loss
