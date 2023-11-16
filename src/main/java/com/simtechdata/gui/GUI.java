@@ -3,7 +3,6 @@ package com.simtechdata.gui;
 import com.simtechdata.enums.MessageType;
 import com.simtechdata.enums.TabType;
 import com.simtechdata.gui.tree.TreeForm;
-import com.simtechdata.settings.AppSettings;
 import com.simtechdata.utility.*;
 import javafx.application.Platform;
 import javafx.beans.binding.BooleanBinding;
@@ -31,6 +30,8 @@ import java.net.URL;
 import java.util.*;
 import java.util.concurrent.*;
 
+import static com.simtechdata.settings.SETTING.*;
+
 public class GUI {
 
     private static final GUI INSTANCE = new GUI();
@@ -49,7 +50,7 @@ public class GUI {
     private final ConsoleOutput consoleOutput = new ConsoleOutput();
     //private ConsoleOutput consoleOutput;
     private int jobQueSize = 0;
-    private int max = AppSettings.get.threads();
+    private int max = THREAD_COUNT.getInt();
     private final Stage stage;
     private boolean ready = false;
     private Spinner<Integer> spinThreads;
@@ -113,7 +114,7 @@ public class GUI {
     }
 
     private void makeProgressControls() {
-        int top = AppSettings.get.threads();
+        int top = THREAD_COUNT.getInt();
         int midPoint = top / 2;
         listViewLeft.getItems().clear();
         listViewRight.getItems().clear();
@@ -156,35 +157,36 @@ public class GUI {
     }
 
     private void setHistory() {
-        String rawData = AppSettings.get.urlHistory();
+        String rawData = URL_HISTORY.getString();
         String[] array = rawData.split(";");
         ObservableList<String> list = FXCollections.observableArrayList(Arrays.asList(array));
         Platform.runLater(() -> cbHistory.setItems(list));
     }
+
     private HBox getURLField() {
         Label label = new Label("URL");
         label.setPrefWidth(50);
         cbHistory = new ChoiceBox<>();
         setHistory();
         cbHistory.setPrefWidth(300);
-        cbHistory.setOnAction(e->{
+        cbHistory.setOnAction(e -> {
             String url = cbHistory.getValue();
-            AppSettings.set.urlHistory(tfURL.getText());
+            URL_HISTORY.setString(tfURL.getText());
             Platform.runLater(() -> tfURL.setText(url));
         });
-        tfURL = newTextField(AppSettings.get.lastURL(), "Full URL to top folder");
+        tfURL = newTextField(LAST_URL.getString(), "Full URL to top folder");
         tfURL.setOnAction(e -> start());
         tfURL.disableProperty().bind(stop.not());
         tfURL.focusedProperty().addListener(((observable, oldValue, newValue) -> {
             String url = tfURL.getText();
-            AppSettings.set.lastURL(url);
+            LAST_URL.setString(url);
             setHistory();
         }));
         tfURL.setPrefWidth(800);
-        btnTree  = new Button("Tree View");
-        btnTree.setOnAction(e->{
+        btnTree = new Button("Tree View");
+        btnTree.setOnAction(e -> {
             String url = tfURL.getText();
-            AppSettings.set.lastURL(url);
+            LAST_URL.setString(url);
             Element link = new Element(url).html(url);
             new TreeForm(new Link(link));
         });
@@ -218,9 +220,9 @@ public class GUI {
         lblSpin.setPrefWidth(110);
         spinThreads = new Spinner<>(1, 20, 1);
         spinThreads.setEditable(false);
-        spinThreads.getValueFactory().setValue(AppSettings.get.threads());
+        spinThreads.getValueFactory().setValue(THREAD_COUNT.getInt());
         spinThreads.getValueFactory().valueProperty().addListener(((observableValue, oldValue, newValue) -> {
-            AppSettings.set.threads(newValue);
+            THREAD_COUNT.setInt(newValue);
             max = newValue;
             makeProgressControls();
         }));
@@ -298,10 +300,10 @@ public class GUI {
 
     private void getFolder() {
         DirectoryChooser dc = new DirectoryChooser();
-        dc.setInitialDirectory(new File(AppSettings.get.lastFolder()));
+        dc.setInitialDirectory(new File(LAST_FOLDER.getString()));
         File folder = dc.showDialog(null);
         if (folder != null) {
-            AppSettings.set.lastFolder(folder.getAbsolutePath());
+            LAST_FOLDER.setString(folder.getAbsolutePath());
             tfFolder.setText(folder.getAbsolutePath());
         }
     }
@@ -344,7 +346,7 @@ public class GUI {
                     stop.setValue(true);
                     Core.reset();
                     Platform.runLater(() -> {
-                        progressMap.get(0).setProgress("",0.0);
+                        progressMap.get(0).setProgress("", 0.0);
                         lblQue.setText("Job Que: " + 0 + " (" + 0 + " downloaded)");
                     });
                 }
@@ -383,6 +385,7 @@ public class GUI {
     }
 
     private boolean setDownload = false;
+
     private void startSelectDownloads() {
         setDownload = true;
         int tSize = spinThreads.getValue();
@@ -412,14 +415,14 @@ public class GUI {
         timer.scheduleAtFixedRate(reportQueSize(), 1000, 750);
         startTime = System.currentTimeMillis();
         String urlLink = tfURL.getText();
-        AppSettings.set.lastURL(urlLink);
+        LAST_URL.setString(urlLink);
         setHistory();
         Platform.runLater(() -> btnGo.setDisable(true));
         return true;
     }
 
     private void start() {
-        if(setDownload) {
+        if (setDownload) {
             startSelectDownloads();
             return;
         }

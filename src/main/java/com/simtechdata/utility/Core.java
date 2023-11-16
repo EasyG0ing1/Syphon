@@ -1,7 +1,6 @@
 package com.simtechdata.utility;
 
 import com.simtechdata.enums.OS;
-import com.simtechdata.settings.AppSettings;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.LongProperty;
 import javafx.beans.property.SimpleIntegerProperty;
@@ -11,21 +10,21 @@ import javafx.scene.image.Image;
 import javafx.stage.Screen;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
-import org.jsoup.select.Elements;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Paths;
-import java.util.*;
-import java.util.concurrent.ConcurrentLinkedDeque;
-import java.util.concurrent.LinkedBlockingQueue;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.DoubleAdder;
+
+import static com.simtechdata.settings.SETTING.*;
 
 public class Core {
 
@@ -45,7 +44,7 @@ public class Core {
     public static final double SCREEN_WIDTH = BOUNDS.getWidth();
     public static final double WIDTH = SCREEN_WIDTH * .8;
     public static final double HEIGHT = SCREEN_HEIGHT * .8;
-    public static String baseFolder = AppSettings.get.lastFolder();
+    public static String baseFolder = LAST_FOLDER.getString();
     public static final IntegerProperty SELECTED_COUNT = new SimpleIntegerProperty(0);
     public static final LongProperty SELECTED_BYTES = new SimpleLongProperty(0);
     private static final AtomicLong Selected_Count = new AtomicLong();
@@ -54,10 +53,11 @@ public class Core {
     public static Set<Download> downloadSet = new HashSet<>();
 
     private static boolean monitorStarted = false;
+
     public static void startMonitor() {
-        if(!monitorStarted) {
+        if (!monitorStarted) {
             new Thread(() -> {
-                while(true) {
+                while (true) {
                     SELECTED_BYTES.setValue(Selected_Bytes.get());
                     SELECTED_COUNT.setValue(Selected_Count.get());
                     sleep(500);
@@ -66,9 +66,11 @@ public class Core {
             monitorStarted = true;
         }
     }
+
     public static void addSelectedCount(long num) {
         Selected_Count.addAndGet(num);
     }
+
     public static void addBytesSelected(long num) {
         Selected_Bytes.addAndGet(num);
     }
@@ -103,8 +105,9 @@ public class Core {
     public static double getTotal() {
         return TOTAL_SITE_DATA.doubleValue();
     }
+
     public static boolean baseFolderExists() {
-        if(baseFolder.isEmpty())
+        if (baseFolder.isEmpty())
             return false;
         return Paths.get(baseFolder).toFile().exists();
     }
@@ -130,7 +133,7 @@ public class Core {
 
     public static void addCount(String name) {
         String ext = FilenameUtils.getExtension(name).toLowerCase();
-        Set<String> excludes = AppSettings.get.duplicateExclusionSet();
+        Set<String> excludes = EXCLUDED_EXTENSIONS.duplicateExclusionSet();
         if (!excludes.contains(ext)) {
             boolean replace = false;
             int num = 1;

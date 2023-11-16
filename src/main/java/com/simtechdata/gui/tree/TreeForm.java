@@ -3,7 +3,6 @@ package com.simtechdata.gui.tree;
 import com.simtechdata.gui.GUI;
 import com.simtechdata.gui.tree.factory.Cell;
 import com.simtechdata.gui.tree.factory.ItemClass;
-import com.simtechdata.settings.AppSettings;
 import com.simtechdata.utility.Core;
 import com.simtechdata.utility.Link;
 import com.simtechdata.utility.Links;
@@ -29,6 +28,8 @@ import java.util.Set;
 
 import static com.simtechdata.enums.NodeType.FILE;
 import static com.simtechdata.enums.NodeType.FOLDER;
+import static com.simtechdata.settings.SETTING.EXCLUDED_EXTENSIONS;
+import static com.simtechdata.settings.SETTING.REMOVE_DUPLICATES;
 
 public class TreeForm {
 
@@ -70,8 +71,8 @@ public class TreeForm {
             if (e.getClickCount() >= 2) {
                 TreeItem<ItemClass> treeItem = treeView.getSelectionModel().getSelectedItem();
                 Platform.runLater(() -> lblMsg.setText("Selecting Items"));
-                for(TreeItem<ItemClass> leaf : treeItem.getChildren()) {
-                    if(leaf.getValue().isFile())
+                for (TreeItem<ItemClass> leaf : treeItem.getChildren()) {
+                    if (leaf.getValue().isFile())
                         new Thread(() -> leaf.getValue().toggleSelected()).start();
                 }
                 treeItem.setExpanded(true);
@@ -90,9 +91,9 @@ public class TreeForm {
     }
 
     private Runnable selectFiles(TreeItem<ItemClass> treeItem) {
-        return () ->{
-            for(TreeItem<ItemClass> leaf : treeItem.getChildren()) {
-                if(leaf.getValue().isFile())
+        return () -> {
+            for (TreeItem<ItemClass> leaf : treeItem.getChildren()) {
+                if (leaf.getValue().isFile())
                     leaf.getValue().toggleSelected();
                 bumpProgress();
                 Core.sleep(10);
@@ -247,8 +248,8 @@ public class TreeForm {
         Label lblRemoveDupes = newLabel("Remove Duplicates");
         lblRemoveDupes.setPrefWidth(125);
         cbRemoveDupes = new CheckBox();
-        cbRemoveDupes.setSelected(AppSettings.get.removeDuplicates());
-        cbRemoveDupes.setOnAction(e -> AppSettings.set.removeDuplicates(cbRemoveDupes.isSelected()));
+        cbRemoveDupes.setSelected(REMOVE_DUPLICATES.getBool());
+        cbRemoveDupes.setOnAction(e -> REMOVE_DUPLICATES.setBool(cbRemoveDupes.isSelected()));
         pBar = new ProgressBar(0.0);
         pBar.setPrefWidth(200);
         HBox boxDupes = newHBox(lblRemoveDupes, cbRemoveDupes);
@@ -314,7 +315,7 @@ public class TreeForm {
         label.setPrefWidth(width);
         label.setPrefHeight(40);
         label.setWrapText(true);
-        TextArea taExt = new TextArea(AppSettings.get.duplicateExclusions().replaceAll(";", "\n"));
+        TextArea taExt = new TextArea(EXCLUDED_EXTENSIONS.getString().toLowerCase().replaceAll(";", "\n"));
         taExt.setPrefWidth(width);
         taExt.setPrefHeight(height - 50);
         VBox vbox = new VBox(10, label, taExt);
@@ -327,7 +328,7 @@ public class TreeForm {
             stage.showAndWait();
             String exclusions = taExt.getText().replaceAll("\\n", ";").replaceAll(";+", ";").replaceAll("[^a-zA-Z0-9;]+", "");
             exclusions = (exclusions.endsWith(";")) ? exclusions.substring(0, exclusions.length() - 1) : exclusions;
-            AppSettings.set.duplicateExclusions(exclusions);
+            EXCLUDED_EXTENSIONS.setString(exclusions);
         });
     }
 }
