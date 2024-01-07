@@ -5,7 +5,11 @@ module Syphon {
     requires javafx.controls;
     requires java.prefs;
     requires java.base;
+    requires com.google.gson;
 
+
+    opens com.simtechdata.gui.tree to com.google.gson;
+    opens com.simtechdata.gui.tree.factory to com.google.gson;
 
     exports com.simtechdata;
     exports com.simtechdata.enums;

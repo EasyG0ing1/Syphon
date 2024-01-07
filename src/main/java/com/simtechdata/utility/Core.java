@@ -80,6 +80,8 @@ public class Core {
         DOWNLOADED_THIS_SESSION.reset();
         TOTAL_DOWNLOADED.reset();
         TOTAL_SITE_DATA.reset();
+        Selected_Bytes.set(0);
+        Selected_Count.set(0);
     }
 
     public static void addGrandTotal(long value) {
@@ -134,20 +136,22 @@ public class Core {
     public static void addCount(String name) {
         String ext = FilenameUtils.getExtension(name).toLowerCase();
         Set<String> excludes = EXCLUDED_EXTENSIONS.duplicateExclusionSet();
-        if (!excludes.contains(ext)) {
-            boolean replace = false;
-            int num = 1;
-            for (String word : countMap.keySet()) {
-                if (word.equals(name)) {
-                    num = countMap.get(word) + 1;
-                    replace = true;
-                    break;
+        if(excludes != null) {
+            if (!excludes.contains(ext)) {
+                boolean addNew = true;
+                int num = 1;
+                for (String word : countMap.keySet()) {
+                    if (word.equals(name)) {
+                        num = countMap.get(word) + 1;
+                        countMap.replace(word, num);
+                        addNew = false;
+                        break;
+                    }
+                }
+                if(addNew){
+                    countMap.put(name, num);
                 }
             }
-            if (replace) {
-                countMap.remove(name);
-            }
-            countMap.put(name, num);
         }
     }
 

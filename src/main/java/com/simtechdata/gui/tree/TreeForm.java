@@ -1,8 +1,12 @@
 package com.simtechdata.gui.tree;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.simtechdata.enums.OS;
 import com.simtechdata.gui.GUI;
 import com.simtechdata.gui.tree.factory.Cell;
 import com.simtechdata.gui.tree.factory.ItemClass;
+import com.simtechdata.gui.tree.factory.ItemRecord;
 import com.simtechdata.utility.Core;
 import com.simtechdata.utility.Link;
 import com.simtechdata.utility.Links;
@@ -22,7 +26,11 @@ import javafx.scene.control.*;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
+import org.apache.commons.io.FileUtils;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.charset.Charset;
 import java.util.LinkedList;
 import java.util.Set;
 
@@ -33,10 +41,11 @@ import static com.simtechdata.settings.SETTING.REMOVE_DUPLICATES;
 
 public class TreeForm {
 
-    private final TreeItem<ItemClass> root;
-    private final TreeView<ItemClass> treeView;
+    private TreeItem<ItemClass> root;
+    private TreeView<ItemClass> treeView;
     private final Link parentLink;
     private boolean stop = false;
+    private File jsonFile;
     private Label lblMsg;
     private Stage stage;
     private Scene scene;
@@ -49,17 +58,22 @@ public class TreeForm {
     private double totalItems = 0.0;
     private double itemsAdded = 0.0;
     private String activeThread = "";
+    private Set<String> repeats;
+    private double width;
+    private double height;
+    private Label lblItemCount;
+    private Label lblTotalSize;
 
 
-    public TreeForm(Link parentLink) {
+    public TreeForm(Link parentLink, boolean skipFileCheck) {
         this.parentLink = parentLink;
-        this.root = new TreeItem<>(new ItemClass(""));
-        this.treeView = new TreeView<>(root);
         buildControls();
-        new Thread(show()).start();
+        new Thread(show(skipFileCheck)).start();
     }
 
     private void buildControls() {
+        this.root     = new TreeItem<>(new ItemClass(""));
+        this.treeView = new TreeView<>(root);
         root.setExpanded(true);
         treeView.setShowRoot(false);
         treeView.setCellFactory(param -> new Cell());
@@ -90,18 +104,10 @@ public class TreeForm {
         SELECTED_BYTES.addListener(((observable, oldValue, newValue) -> Platform.runLater(() -> lblTotalSize.setText(Core.f((long) newValue)))));
     }
 
-    private Runnable selectFiles(TreeItem<ItemClass> treeItem) {
-        return () -> {
-            for (TreeItem<ItemClass> leaf : treeItem.getChildren()) {
-                if (leaf.getValue().isFile())
-                    leaf.getValue().toggleSelected();
-                bumpProgress();
-                Core.sleep(10);
-            }
-        };
-    }
-
     public void buildTree(TreeItem<ItemClass> treeItem, Link topLink) {
+        if (topLink == null) {
+            return;
+        }
         Links links = topLink.getLinks();
         boolean dontAddDuplicates = cbRemoveDupes.isSelected();
         for (Link link : links) {
@@ -121,31 +127,57 @@ public class TreeForm {
             }
             else {
                 TreeItem<ItemClass> folderItem = createTreeItem(new ItemClass(link, FOLDER));
-                folderItem.expandedProperty().addListener(((observable, oldValue, newValue) -> {
-                    if (!oldValue && newValue) {
-                        new Thread(() -> {
-                            Link lnk = folderItem.getValue().getLink();
-                            if (folderItem.getChildren().isEmpty()) {
-                                Platform.runLater(() -> lblMsg.setText("BUILDING BRANCH: " + link.getEnd()));
-                                if (pBar.getProgress() == 0) {
-                                    activeThread = Thread.currentThread().getName();
-                                    itemsAdded = 0.0;
-                                    totalItems = folderItem.getValue().getLink().getLinks().size();
-                                }
-                                buildTree(folderItem, lnk);
-                                clearProgressBar();
-                                Platform.runLater(() -> lblMsg.setText("BRANCH BUILT: " + link.getEnd()));
-                            }
-                        }).start();
-                    }
-                }));
+                addExpansion(folderItem, link);
                 bumpProgress();
                 Platform.runLater(() -> treeItem.getChildren().add(folderItem));
             }
         }
         if (dontAddDuplicates)
-            removeDuplicates(treeItem);
+            removeDuplicates();
         sortTree(treeItem);
+    }
+
+    private TreeItem<ItemClass> buildTreeItemFromItemRecord(ItemRecord itemRecord) {
+        TreeItem<ItemClass> treeItem;
+        ItemClass itemClass = ItemClass.getFromRecord(itemRecord);
+
+        treeItem = createTreeItem(itemClass);
+
+        if (itemClass.isFile()) {
+            String name = itemClass.getName();
+            Core.addCount(name);
+        }
+
+        if (itemClass.isFolder())
+            addExpansion(treeItem, itemClass.getLink());
+
+        for (ItemRecord childRecord : itemRecord.getChildren()) {
+            TreeItem<ItemClass> childTreeItem = buildTreeItemFromItemRecord(childRecord);
+            treeItem.getChildren().add(childTreeItem);
+        }
+        return treeItem;
+    }
+
+    private void addExpansion(TreeItem<ItemClass> folderItem, Link link) {
+        folderItem.expandedProperty().addListener(((observable, oldValue, newValue) -> {
+            if (!oldValue && newValue) {
+                new Thread(() -> {
+                    Link lnk = folderItem.getValue().getLink();
+                    if (folderItem.getChildren().isEmpty()) {
+                        Platform.runLater(() -> lblMsg.setText("BUILDING BRANCH: " + (link != null ? link.getEnd() : "")));
+                        if (pBar.getProgress() == 0) {
+                            activeThread = Thread.currentThread().getName();
+                            itemsAdded = 0.0;
+                            if (folderItem.getValue().getLink() != null)
+                                totalItems = folderItem.getValue().getLink().getLinks().size();
+                        }
+                        buildTree(folderItem, lnk);
+                        clearProgressBar();
+                        Platform.runLater(() -> lblMsg.setText("BRANCH BUILT: " + (link != null ? link.getEnd() : "")));
+                    }
+                }).start();
+            }
+        }));
     }
 
     private TreeItem<ItemClass> createTreeItem(final ItemClass itemClass) {
@@ -189,17 +221,12 @@ public class TreeForm {
         }
     }
 
-    private Set<String> repeats;
-
-    private void removeDuplicates(TreeItem<ItemClass> treeItem) {
+    private void removeDuplicates() {
         repeats = Core.getRepeatOffenders();
-        Platform.runLater(() -> removeDuplicateItems(treeItem));
+        Platform.runLater(() -> removeDuplicateItems(root));
     }
 
-    private double width;
-    private double height;
-
-    private Runnable show() {
+    private Runnable show(boolean skipFileCheck) {
         return () -> {
             Platform.runLater(() -> {
                 stage = new Stage();
@@ -210,16 +237,27 @@ public class TreeForm {
                 stage.setOnCloseRequest(e -> stop = true);
                 stage.show();
             });
-            Core.startMonitor();
-            itemsAdded = 0.0;
-            totalItems = parentLink.getLinks().size();
-            activeThread = Thread.currentThread().getName();
-            buildTree(root, parentLink);
-            clearProgressBar();
-            Platform.runLater(() -> lblMsg.setText("BASE TREE BUILT"));
+            createTree(skipFileCheck);
         };
     }
 
+    private void createTree(boolean skipFileCheck) {
+        Core.startMonitor();
+        Core.reset();
+        itemsAdded = 0.0;
+        totalItems = parentLink.getLinks().size();
+        activeThread = Thread.currentThread().getName();
+        jsonFile = new File(OS.getDataFilePath(this.parentLink.getServer() + "_tree.json"));
+        if (jsonFile.exists() && !skipFileCheck) {
+            loadTreeFromJsonFile();
+            Platform.runLater(() -> lblMsg.setText("TREE BUILT FROM PREVIOUS SAVE"));
+        }
+        else {
+            buildTree(root, parentLink);
+            clearProgressBar();
+            Platform.runLater(() -> lblMsg.setText("BASE TREE BUILT"));
+        }
+    }
 
     private VBox getLeftVBox() {
         VBox vbox = new VBox();
@@ -227,7 +265,7 @@ public class TreeForm {
         vbox.setSpacing(20);
         vbox.setAlignment(Pos.CENTER);
         Button btnDupes = newButton("Remove Duplicates");
-        btnDupes.setOnAction(e -> removeDuplicates(root));
+        btnDupes.setOnAction(e -> removeDuplicates());
         Button btnStart = newButton("Start Download");
         btnStart.setOnAction(e -> {
             stage.close();
@@ -238,6 +276,8 @@ public class TreeForm {
         lblMsg = newLabel("BUILDING TREE ROOT, BE PATIENT");
         lblMsg.setPrefWidth(width * .9);
         lblMsg.setStyle("-fx-font-weight: bold; -fx-font-size: 14");
+        Button btnSaveTree = new Button("Save Tree");
+        btnSaveTree.setOnAction(e -> saveTreeAsJson());
         Label lblItemInfo = newLabel("Selected:");
         lblItemInfo.setPrefWidth(65);
         lblItemInfo.setAlignment(Pos.CENTER_LEFT);
@@ -257,7 +297,7 @@ public class TreeForm {
         HBox boxItems = newHBox(lblItemInfo, lblItemCount, lblTotalSize);
         boxItems.setPrefWidth(200);
         boxItems.setAlignment(Pos.CENTER_LEFT);
-        vbox.getChildren().addAll(lblMsg, pBar, boxItems, boxDupes, btnDupes, btnStart, btnDupeExclusion);
+        vbox.getChildren().addAll(lblMsg, pBar, boxItems, boxDupes, btnDupes, btnStart, btnDupeExclusion, btnSaveTree);
         vbox.setAlignment(Pos.TOP_CENTER);
         return vbox;
     }
@@ -273,9 +313,6 @@ public class TreeForm {
     private void clearProgressBar() {
         Platform.runLater(() -> pBar.setProgress(0.0));
     }
-
-    private Label lblItemCount;
-    private Label lblTotalSize;
 
     private HBox newHBox(Node... nodes) {
         HBox box = new HBox(10, nodes);
@@ -293,7 +330,6 @@ public class TreeForm {
         });
         return new HBox();
     }
-
 
     private Button newButton(String label) {
         Button btn = new Button(label);
@@ -326,9 +362,51 @@ public class TreeForm {
             stage.setScene(scene);
             stage.centerOnScreen();
             stage.showAndWait();
-            String exclusions = taExt.getText().replaceAll("\\n", ";").replaceAll(";+", ";").replaceAll("[^a-zA-Z0-9;]+", "");
+            String exclusions = taExt.getText().replaceAll("\\n", ";").replaceAll(";+", ";").replaceAll("[^a-zA-Z0-9_;-]+", "");
             exclusions = (exclusions.endsWith(";")) ? exclusions.substring(0, exclusions.length() - 1) : exclusions;
             EXCLUDED_EXTENSIONS.setString(exclusions);
         });
     }
+
+    private ItemRecord buildItemRecordStructure(TreeItem<ItemClass> treeItem) {
+        ItemClass itemClass = treeItem.getValue();
+        ItemRecord record = itemClass.getRecord();
+        for (TreeItem<ItemClass> child : treeItem.getChildren()) {
+            record.addChild(buildItemRecordStructure(child));
+        }
+        return record;
+    }
+
+    public void saveTreeAsJson() {
+        lblMsg.setText("SAVING TREE STRUCTURE");
+        ItemRecord rootRecord = buildItemRecordStructure(root);
+        Gson gson = new GsonBuilder().setPrettyPrinting().create();
+        String json = gson.toJson(rootRecord);
+        try {
+            FileUtils.writeStringToFile(jsonFile, json, Charset.defaultCharset());
+            lblMsg.setText("SAVED: " + jsonFile.getAbsolutePath());
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+
+    public void buildTreeFromJson(ItemRecord itemRecord) {
+        root = buildTreeItemFromItemRecord(itemRecord);
+        treeView.setRoot(root);
+        treeView.refresh();
+        sortTree(root);
+    }
+
+    public void loadTreeFromJsonFile() {
+        try {
+            String json = FileUtils.readFileToString(jsonFile, Charset.defaultCharset());
+            Gson gson = new GsonBuilder().setPrettyPrinting().create();
+            ItemRecord rootRecord = gson.fromJson(json, ItemRecord.class);
+            buildTreeFromJson(rootRecord);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
 }

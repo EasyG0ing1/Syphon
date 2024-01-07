@@ -41,7 +41,8 @@ public class GUI {
     private TextField tfURL;
     private TextField tfFolder;
     private Button btnGo;
-    private Button btnTree;
+    private Button btnSavedTree;
+    private Button btnNewTree;
     private Button btnStop;
     private ListView<VBox> listViewLeft;
     private ListView<VBox> listViewRight;
@@ -64,6 +65,30 @@ public class GUI {
     private ProgressObject poTotals;
 
     private final Timer timer;
+
+    private void startSelectDownloads() {
+        tfURL.setVisible(false);
+        tfFolder.setVisible(false);
+        btnGo.setVisible(false);
+        btnSavedTree.setVisible(false);
+        cbHistory.setVisible(false);
+        lblURL.setVisible(false);
+        lblFolder.setVisible(false);
+
+        setDownload = true;
+        int tSize = spinThreads.getValue();
+        int jobSize = Core.downloadSet.size();
+        if (initDownloads()) {
+            for (Download download : Core.downloadSet) {
+                if (stop.getValue().equals(true))
+                    return;
+                jobQue.add(download);
+                exec.submit(download.start());
+            }
+            Core.downloadSet.clear();
+            setDownload = false;
+        }
+    }
 
     public GUI() {
         this.stage = new Stage();
@@ -158,14 +183,18 @@ public class GUI {
 
     private void setHistory() {
         String rawData = URL_HISTORY.getString();
-        String[] array = rawData.split(";");
-        ObservableList<String> list = FXCollections.observableArrayList(Arrays.asList(array));
-        Platform.runLater(() -> cbHistory.setItems(list));
+        if(rawData != null){
+            String[] array = rawData.split(";");
+            ObservableList<String> list = FXCollections.observableArrayList(Arrays.asList(array));
+            Platform.runLater(() -> cbHistory.setItems(list));
+        }
     }
 
+    private Label lblURL;
+
     private HBox getURLField() {
-        Label label = new Label("URL");
-        label.setPrefWidth(50);
+        lblURL = new Label("URL");
+        lblURL.setPrefWidth(50);
         cbHistory = new ChoiceBox<>();
         setHistory();
         cbHistory.setPrefWidth(300);
@@ -180,17 +209,13 @@ public class GUI {
         tfURL.focusedProperty().addListener(((observable, oldValue, newValue) -> {
             String url = tfURL.getText();
             LAST_URL.setString(url);
-            setHistory();
         }));
         tfURL.setPrefWidth(800);
-        btnTree = new Button("Tree View");
-        btnTree.setOnAction(e -> {
-            String url = tfURL.getText();
-            LAST_URL.setString(url);
-            Element link = new Element(url).html(url);
-            new TreeForm(new Link(link));
-        });
-        btnTree.setPrefWidth(75);
+        btnSavedTree = new Button("Saved Tree View");
+        btnNewTree = new Button("New Tree View");
+        btnSavedTree.setOnAction(e -> newTree(false));
+        btnNewTree.setOnAction(e -> newTree(true));
+        btnSavedTree.setPrefWidth(75);
         btnGo = new Button("Go");
         btnGo.setOnAction(e -> start());
         btnGo.setPrefWidth(55);
@@ -199,12 +224,20 @@ public class GUI {
         EventHandler<Event> consumeHandler = Event::consume;
         listViewLeft.addEventFilter(Event.ANY, consumeHandler);
         listViewRight.addEventFilter(Event.ANY, consumeHandler);
-        return newHBox(label, tfURL, cbHistory, btnTree, btnGo);
+        return newHBox(lblURL, tfURL, cbHistory, btnSavedTree, btnNewTree, btnGo);
     }
 
+    private void newTree(boolean skipFileCheck) {
+        String url = tfURL.getText();
+        LAST_URL.setString(url);
+        Element link = new Element(url).html(url);
+        new TreeForm(new Link(link), skipFileCheck);
+    }
+
+    private Label lblFolder;
     private HBox getFolderField() {
-        Label label = new Label("Folder");
-        label.setPrefWidth(50);
+        lblFolder = new Label("Folder");
+        lblFolder.setPrefWidth(50);
         tfFolder = newTextField(Core.baseFolder, "Path to mirror path structure");
         tfFolder.disableProperty().bind(stop.not());
         tfFolder.setPrefWidth(800);
@@ -240,7 +273,7 @@ public class GUI {
         AnchorPane.setTopAnchor(lblQue, 0.0);
         AnchorPane.setLeftAnchor(spinBox, 0.0);
         AnchorPane.setTopAnchor(spinBox, 0.0);
-        return newHBox(label, tfFolder, btnSet, btnStop, ap);
+        return newHBox(lblFolder, tfFolder, btnSet, btnStop, ap);
     }
 
     private void stop() {
@@ -307,8 +340,8 @@ public class GUI {
             tfFolder.setText(folder.getAbsolutePath());
         }
     }
-
     private long startTime, endTime;
+
     private int completeCount = 0;
 
     private TimerTask reportQueSize() {
@@ -385,22 +418,6 @@ public class GUI {
     }
 
     private boolean setDownload = false;
-
-    private void startSelectDownloads() {
-        setDownload = true;
-        int tSize = spinThreads.getValue();
-        int jobSize = Core.downloadSet.size();
-        if (initDownloads()) {
-            for (Download download : Core.downloadSet) {
-                if (stop.getValue().equals(true))
-                    return;
-                jobQue.add(download);
-                exec.submit(download.start());
-            }
-            Core.downloadSet.clear();
-            setDownload = false;
-        }
-    }
 
     private boolean initDownloads() {
         jobQue.clear();

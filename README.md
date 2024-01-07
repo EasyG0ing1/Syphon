@@ -24,5 +24,7 @@ Once the job que count at the top of the screen stops counting, then that top pr
 
 When you see files downloading where the progress bar just bounces from side to side, that would be a file that the server reported back as being of 0 size. The file will still download, but theres no way, obviously to show the progress since we don't know what the final size of the file will be.
 
+The **Saved Tree View** and **New Tree View** buttons work like this: Clicking on **New Tree View** will start to build the tree mirror from the web server. If you chose to save the tree view so that you don't have to wait for it to build in the future, you can click on the Save Tree button then the next time you go to that web site, simply click on **Saved Tree View** and it will load that saved tree from disk instead of re-building it from scratch.
+
 ___
 I threw this project together over a weekend, and there are certainly areas that could use improvement, so feel free to create an issue or a pull request if you have any thoughts, concerns or wish to contribute.

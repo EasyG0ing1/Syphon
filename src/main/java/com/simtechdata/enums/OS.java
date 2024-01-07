@@ -64,6 +64,10 @@ public enum OS {
         return Paths.get(getDataPath(), filename).toAbsolutePath().toString();
     }
 
+    public static File getLinkFile() {
+        return Paths.get(getDataFilePath("links.txt")).toFile();
+    }
+
     public static String getDataPath() {
         String path = OS.isWindows() ?
                 Paths.get(System.getenv("LOCALAPPDATA"), "Syphon").toAbsolutePath().toString() :

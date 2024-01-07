@@ -1,6 +1,7 @@
 package com.simtechdata.gui.tree.factory;
 
 import com.simtechdata.utility.Core;
+import javafx.application.Platform;
 import javafx.scene.control.TreeCell;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -39,14 +40,18 @@ public class Cell extends TreeCell<ItemClass> implements Serializable {
     protected void updateItem(ItemClass item, boolean empty) {
         super.updateItem(item, empty);
         if (empty || item == null) {
-            setText(null);
-            setGraphic(null);
+            Platform.runLater(() -> {
+                setText(null);
+                setGraphic(null);
+            });
         }
         else {
             iv.setPreserveRatio(true);
             iv.setFitWidth(15);
-            setGraphic(iv);
-            setText(item.toString());
+            Platform.runLater(() -> {
+                setGraphic(iv);
+                setText(item.toString());
+            });
         }
     }
 }

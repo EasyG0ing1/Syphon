@@ -1,6 +1,7 @@
 package com.simtechdata.utility;
 
 
+import com.simtechdata.enums.NodeType;
 import org.jsoup.Connection;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -32,7 +33,7 @@ public class Link {
         this.link = link;
         this.urlString = getFullURL(this.link);
         this.end = getEnd(this.link);
-        this.base = urlString.replaceFirst(end, "");
+        this.base = urlString.replaceFirst(Pattern.quote(end), "");
         this.numLength = getNumberLength(this.end);
         this.longestLen = 0;
         setBaseURI();
@@ -41,11 +42,33 @@ public class Link {
         setIsFile();
     }
 
+    public Link(String urlString, NodeType type) {
+        if(urlString == null) {
+            System.out.println("null");
+            System.exit(0);
+        }
+        if(urlString.isEmpty()) {
+            System.out.println("empty");
+            System.exit(0);
+        }
+        this.link = new Element(urlString);
+        this.urlString = urlString;
+        this.end = getEnd(this.link);
+        this.base = urlString.replaceFirst(Pattern.quote(end), "");
+        this.numLength = getNumberLength(this.end);
+        this.longestLen = 0;
+        setBaseURI();
+        this.startsWithNumber = false;
+        this.server = getSetServer();
+        this.isFile = type.equals(NodeType.FILE);
+        this.isFolder = type.equals(NodeType.FOLDER);
+    }
+
     public Link(Element link, long longestLen) {
         this.link = link;
         this.urlString = getFullURL(this.link);
         this.end = getEnd(this.link);
-        this.base = urlString.replaceFirst(end, ""); //Will have slash at the end
+        this.base = urlString.replaceFirst(Pattern.quote(end), "");  //Will have slash at the end
         this.numLength = getNumberLength(this.end);
         this.longestLen = longestLen;
         setBaseURI();
@@ -75,7 +98,7 @@ public class Link {
 
     private String stripProtocol(String url) {
         String protocol = url.startsWith("http://") ? "http://" : "https://";
-        return url.replaceFirst(protocol,"");
+        return url.replaceFirst(Pattern.quote(protocol),"");
     }
 
     private String getSetServer() {
@@ -98,16 +121,18 @@ public class Link {
     }
 
     private void setIsFile() {
-        boolean isFile = true;
-        try {
-            Connection.Response resp = Jsoup.connect(urlString).method(Connection.Method.HEAD).execute();
-            if(!resp.contentType().equals("text/plain")) //If the above line throws an exception this line is skipped
-                isFile = false;
+        if(!urlString.isEmpty()) {
+            boolean isFile = true;
+            try {
+                Connection.Response resp = Jsoup.connect(urlString).method(Connection.Method.HEAD).execute();
+                if(!resp.contentType().equals("text/plain")) //If the above line throws an exception this line is skipped
+                    isFile = false;
 
-        } catch (IOException ignored) {
+            } catch (IOException ignored) {
+            }
+            this.isFile = isFile;
+            this.isFolder = !isFile;
         }
-        this.isFile = isFile;
-        this.isFolder = !isFile;
     }
 
     private int getNumberLength(String string) {
@@ -141,14 +166,13 @@ public class Link {
     public String  getFilePath() {
         String urlString = getCleanURL();
         String protocol = urlString.startsWith("http://") ? "http://" : "https://";
-        urlString = urlString.replaceFirst(protocol,"");
+        urlString = urlString.replaceFirst(Pattern.quote(protocol),"");
         urlString = urlString.replaceFirst(server + "/", "");
         String[] items = urlString.split("/");
         String file = items[items.length - 1];
         String folders = urlString.replaceFirst("/" + file, "");
         return Paths.get(Core.baseFolder, server, folders, file).toAbsolutePath().toString();
     }
-
 
     public String getEnd() {
         return end;
@@ -195,4 +219,5 @@ public class Link {
     public boolean isValid() {
         return !urlString.isEmpty();
     }
+
 }
