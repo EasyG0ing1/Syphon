@@ -16,6 +16,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -174,9 +175,17 @@ public class Core {
     }
 
     public static void logFile(String logText) {
-        String filePath = OS.getDataFilePath("LogFile.txt");
-        File logFile = new File(filePath);
+        String logFilePath = OS.getDataFilePath("LogFile.txt");
+        String logBackPath = OS.getDataFilePath("LogFile2.txt");
+        File logFile = new File(logFilePath);
+        File logFile2 = new File(logBackPath);
         try {
+            if (logFile.length() > 5242880) {
+                if(logFile2.exists()) {
+                    FileUtils.forceDelete(logFile2);
+                }
+                FileUtils.moveFile(logFile, logFile2, StandardCopyOption.REPLACE_EXISTING);
+            }
             FileUtils.writeStringToFile(logFile, logText + "\n", Charset.defaultCharset(), true);
         } catch (IOException e) {
             throw new RuntimeException(e);

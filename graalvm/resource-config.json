@@ -1,0 +1,63 @@
+{
+  "resources":{
+  "includes":[{
+    "pattern":"\\QFile1.png\\E"
+  }, {
+    "pattern":"\\QFile2.png\\E"
+  }, {
+    "pattern":"\\QFolder.png\\E"
+  }, {
+    "pattern":"\\QMETA-INF/fonts.mf\\E"
+  }, {
+    "pattern":"\\QMETA-INF/services/java.lang.System$LoggerFinder\\E"
+  }, {
+    "pattern":"\\QMETA-INF/services/java.net.spi.InetAddressResolverProvider\\E"
+  }, {
+    "pattern":"\\QMETA-INF/services/java.net.spi.URLStreamHandlerProvider\\E"
+  }, {
+    "pattern":"\\QMETA-INF/services/java.time.zone.ZoneRulesProvider\\E"
+  }, {
+    "pattern":"\\QMETA-INF/services/java.util.prefs.PreferencesFactory\\E"
+  }, {
+    "pattern":"java.base:\\Qjdk/internal/icu/impl/data/icudt72b/nfc.nrm\\E"
+  }, {
+    "pattern":"java.base:\\Qjdk/internal/icu/impl/data/icudt72b/nfkc.nrm\\E"
+  }, {
+    "pattern":"java.base:\\Qjdk/internal/icu/impl/data/icudt72b/ubidi.icu\\E"
+  }, {
+    "pattern":"java.base:\\Qjdk/internal/icu/impl/data/icudt72b/uprops.icu\\E"
+  }, {
+    "pattern":"java.base:\\Qsun/net/idn/uidna.spp\\E"
+  }, {
+    "pattern":"javafx.controls:\\Qcom/sun/javafx/scene/control/skin/modena/modena.bss\\E"
+  }, {
+    "pattern":"javafx.graphics:\\Qcom/sun/glass/utils/NativeLibLoader.class\\E"
+  }, {
+    "pattern":"javafx.graphics:\\Qcom/sun/prism/es2/glsl/FillPgram_Color.frag\\E"
+  }, {
+    "pattern":"javafx.graphics:\\Qcom/sun/prism/es2/glsl/FillPgram_LinearGradient_PAD.frag\\E"
+  }, {
+    "pattern":"javafx.graphics:\\Qcom/sun/prism/es2/glsl/Solid_TextureRGB.frag\\E"
+  }, {
+    "pattern":"javafx.graphics:\\Qcom/sun/prism/es2/glsl/Texture_Color.frag\\E"
+  }, {
+    "pattern":"javafx.graphics:\\Qcom/sun/prism/es2/glsl/Texture_LinearGradient_PAD.frag\\E"
+  }, {
+    "pattern":"javafx.graphics:\\Qcom/sun/scenario/effect/impl/es2/glsl/LinearConvolveShadow_64.frag\\E"
+  }, {
+    "pattern":"javafx.graphics:\\Qcom/sun/scenario/effect/impl/es2/glsl/LinearConvolveShadow_8.frag\\E"
+  }, {
+    "pattern":"javafx.graphics:\\Qlibglass.dylib\\E"
+  }, {
+    "pattern":"javafx.graphics:\\Qlibjavafx_font.dylib\\E"
+  }, {
+    "pattern":"javafx.graphics:\\Qlibprism_es2.dylib\\E"
+  }]},
+  "bundles":[{
+    "name":"com.sun.javafx.tk.quantum.QuantumMessagesBundle",
+    "locales":[""]
+  }, {
+    "name":"com/sun/javafx/scene/control/skin/resources/controls",
+    "locales":[""]
+  }]
+}

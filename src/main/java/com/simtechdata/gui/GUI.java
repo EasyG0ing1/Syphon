@@ -71,6 +71,7 @@ public class GUI {
         tfFolder.setVisible(false);
         btnGo.setVisible(false);
         btnSavedTree.setVisible(false);
+        btnNewTree.setVisible(false);
         cbHistory.setVisible(false);
         lblURL.setVisible(false);
         lblFolder.setVisible(false);
@@ -212,6 +213,7 @@ public class GUI {
         }));
         tfURL.setPrefWidth(800);
         btnSavedTree = new Button("Saved Tree View");
+        btnSavedTree.setMinWidth(125);
         btnNewTree = new Button("New Tree View");
         btnSavedTree.setOnAction(e -> newTree(false));
         btnNewTree.setOnAction(e -> newTree(true));
