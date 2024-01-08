@@ -16,10 +16,8 @@
         <!--<javafx.version>21-ea+24</javafx.version>-->
         <maven-jar-plugin>3.3.0</maven-jar-plugin>
         <versions-maven-plugin>2.16.2</versions-maven-plugin>
-        <javapackager>1.7.5</javapackager>
         <gluonfx-maven-plugin.version>1.0.22</gluonfx-maven-plugin.version>
         <javafx-maven-plugin>0.0.8</javafx-maven-plugin>
-        <maven-surefire-plugin>3.2.3</maven-surefire-plugin>
         <maven-compiler-plugin>3.12.1</maven-compiler-plugin>
         <maven-dependency-plugin>3.6.1</maven-dependency-plugin>
         <maven-shade-plugin>3.5.1</maven-shade-plugin>
@@ -92,17 +90,6 @@
                 <version>${maven-compiler-plugin}</version>
             </plugin>
 
-            <!-- Maven Surefire plugin-->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <version>${maven-surefire-plugin}</version>
-                <configuration>
-                    <classpathDependencyExcludes>org.graalvm.nativeimage</classpathDependencyExcludes>
-                    <argLine>-ea</argLine>
-                </configuration>
-            </plugin>
-
             <!-- JavaFX Maven plugin-->
             <plugin>
                 <groupId>org.openjfx</groupId>
@@ -131,13 +118,11 @@
                         <arg>--add-exports=org.graalvm.nativeimage.builder/com.oracle.svm.core.jdk=ALL-UNNAMED</arg>
                         <arg>${system-native-image-arg}</arg>
                         <arg>${compatibility-arg}</arg>
-                        <arg>-H:ReflectionConfigurationFiles=${project.basedir}/src/main/resources/META-INF/native-image/reflect-config.json</arg>
                     </nativeImageArgs>
-                    <appIdentifier>${mainClass}</appIdentifier>
+                    <appIdentifier>Syphon</appIdentifier>
                     <releaseConfiguration>
                         <vendor>Syphon</vendor>
-                        <description>Syphon is a program that will crawl a web server and recursively traverse all of
-                            its folders and download files either in total, or selectively
+                        <description>Syphon is a program that will crawl a web server and recursively traverse all of its folders and download files either in total, or selectively
                         </description>
                         <packageType>${package.type}</packageType>
                         <bundleShortVersion>${project.version}</bundleShortVersion>
