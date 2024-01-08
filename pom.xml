@@ -131,7 +131,7 @@
                         <arg>--add-exports=org.graalvm.nativeimage.builder/com.oracle.svm.core.jdk=ALL-UNNAMED</arg>
                         <arg>${system-native-image-arg}</arg>
                         <arg>${compatibility-arg}</arg>
-                        <arg>-H:ReflectionConfigurationFiles=${project.basedir}/graalvm/reflect-config.json</arg>
+                        <arg>-H:ReflectionConfigurationFiles=${project.basedir}/src/main/resources/META-INF/native-image/reflect-config.json</arg>
                     </nativeImageArgs>
                     <appIdentifier>${mainClass}</appIdentifier>
                     <releaseConfiguration>
