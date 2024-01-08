@@ -26,5 +26,12 @@ When you see files downloading where the progress bar just bounces from side to 
 
 The **Saved Tree View** and **New Tree View** buttons work like this: Clicking on **New Tree View** will start to build the tree mirror from the web server. If you chose to save the tree view so that you don't have to wait for it to build in the future, you can click on the Save Tree button then the next time you go to that web site, simply click on **Saved Tree View** and it will load that saved tree from disk instead of re-building it from scratch.
 
+You can also add urls so that the drop down list on the first screen always has those URLs in it. Simply make a txt file with each url on its own line, then run the program with the `LinkFile=` argument with the path to the txt file. For example:
+```Bash
+/Applications/Syphon.app/Contents/MacOS/Syphon LinkFile=~/mylinks.txt
+C:\Program Files\Syphon\Syphon\Syphon.exe LinkFile=mylinks.txt
+```
+The program will save the links into its own location and will use them to populate the drop down list at program launch.
+
 ___
 I threw this project together over a weekend, and there are certainly areas that could use improvement, so feel free to create an issue or a pull request if you have any thoughts, concerns or wish to contribute.
