@@ -224,6 +224,7 @@
             <properties>
                 <package.type>msi</package.type>
                 <system-linker-arg>${pom.basedir}/config/missing_symbols-windows-latest.o</system-linker-arg>
+                <compatibility-arg>-march=compatibility</compatibility-arg>
             </properties>
         </profile>
     </profiles>
