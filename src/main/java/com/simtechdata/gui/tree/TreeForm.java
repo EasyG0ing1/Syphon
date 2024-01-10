@@ -250,8 +250,8 @@ public class TreeForm {
             Platform.runLater(() -> lblMsg.setText("TREE BUILT FROM PREVIOUS SAVE"));
         }
         else {
-            buildTree(root, parentLink);
-            Platform.runLater(() -> lblMsg.setText("BASE TREE BUILT"));
+                buildTree(root, parentLink);
+                Platform.runLater(() -> lblMsg.setText("BASE TREE BUILT"));
         }
     }
 

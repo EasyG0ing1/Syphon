@@ -196,7 +196,11 @@
     </build>
 
     <!-- To run the graalvm tracer, first run mvn clean package, then run this:
-         java (2 dashes)module-path /Users/michael/JetBrainsProjects/IntelliJIdea/Syphon/target/libs (2 dashes)add-modules javafx.base,javafx.controls,javafx.graphics -agentlib:native-image-agent=config-output-dir=/Users/michael/JetBrainsProjects/IntelliJIdea/Syphon/graalvm -jar target/SyphonTwo-1.0.0.jar -->
+         java (2 dashes)module-path /Users/michael/JetBrainsProjects/IntelliJIdea/Syphon/target/libs (2 dashes)add-modules javafx.base,javafx.controls,javafx.graphics -agentlib:native-image-agent=config-output-dir=/Users/michael/JetBrainsProjects/IntelliJIdea/Syphon/graalvm -jar target/SyphonTwo-1.0.0.jar
+
+              `mvn8 -P build-for-macos-latest gluonfx:runagent`
+
+          -->
 
     <profiles>
         <!-- [=macOS] GUI native image builder profile -->

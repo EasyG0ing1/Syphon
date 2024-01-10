@@ -188,7 +188,8 @@ public class GUI {
         if(rawData != null){
             String[] array = rawData.split(";");
             ObservableList<String> list = FXCollections.observableArrayList(Arrays.asList(array));
-            Platform.runLater(() -> cbHistory.setItems(list));
+            if(list != null && !list.isEmpty())
+                Platform.runLater(() -> cbHistory.setItems(list));
         }
     }
 

@@ -180,7 +180,7 @@
     "locales":["", "und"]
   }, {
     "name":"com/sun/glass/ui/win/themes",
-    "locales":["", "en", "und"]
+    "locales":["en", "und"]
   }, {
     "name":"com/sun/javafx/scene/control/skin/resources/controls",
     "locales":["", "und"]
