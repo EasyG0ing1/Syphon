@@ -3,7 +3,7 @@
 Syphon is a program that allows you to paste in a URL of any folder on a web server and as long as that server has directory listing enabled, then the entire folder tree can be mirrored to your local hard drive, OR, you can pull up a tree view of the folder and its sub folders and pick and choose which files you want to download.
 
 ## Installation
-Go to the [releases](https://github.com/EasyG0ing1/Syphon/releases) page and download the zip file for your operating system. Windows and Mac will be an installer where Linux offers you the compiled executable. The Java Virtual Machine (JVM) IS NOT REQUIRED to run this program, as it has been compiled into each OS's native-executable using GraalVM.
+Go to the [releases](https://github.com/EasyG0ing1/Syphon/releases/latest) page and download the zip file for your operating system. Windows and Mac will be an installer where Linux offers you the compiled executable. The Java Virtual Machine (JVM) IS NOT REQUIRED to run this program, as it has been compiled into each OS's native-executable using GraalVM.
 
 ## More Info
 Simply putting in a URL then pressing GO will cause the program to traverse that folder and it will recursively scour all of the folders and subfolders and as it finds files, it will add them to a que where it starts downloading as soon as the first file hits the queue.
