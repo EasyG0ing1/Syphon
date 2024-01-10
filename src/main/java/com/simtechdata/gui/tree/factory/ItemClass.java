@@ -12,33 +12,38 @@ import java.io.Serializable;
 import java.net.URL;
 import java.net.URLConnection;
 
-import static com.simtechdata.enums.NodeType.FILE;
-import static com.simtechdata.enums.NodeType.FOLDER;
+import static com.simtechdata.enums.NodeType.*;
 
 public class ItemClass implements Serializable {
 
     private final String label;
-    private String append = "";
     private final NodeType type;
     private Link link;
     private Download download;
     private int fileSize = -1;
+    private int itemCount = -1;
+    private int linkCount = -1;
     private final BooleanProperty selected = new SimpleBooleanProperty(false);
+
+    public ItemClass(Link link) {
+        this.type = link.isFile() ? FILE : FOLDER;
+        this.link = link;
+        label = link.getEnd();
+        setSelected();
+        finish();
+    }
+
+    public ItemClass(String label) {
+        type = NODE;
+        this.label = label;
+        setSelected();
+    }
 
     public ItemRecord getRecord() {
         if (link != null)
-            return new ItemRecord(link.getUrlString(), append, label, fileSize, type);
+            return new ItemRecord(link.getUrlString(), label, fileSize, itemCount, type);
         else
-            return new ItemRecord(append, label, fileSize, type);
-    }
-
-    private ItemClass(ItemRecord record) {
-        this.append = record.getAppend();
-        this.fileSize = record.getFileSize();
-        this.label = record.getLabel();
-        this.type = record.getNodeType();
-        this.link = new Link(record.getLink(), this.type);
-        setSelected();
+            return new ItemRecord(label, fileSize, type);
     }
 
     public static ItemClass getFromRecord(ItemRecord record) {
@@ -47,18 +52,13 @@ public class ItemClass implements Serializable {
         return new ItemClass(record.getLabel());
     }
 
-    public ItemClass(String label) {
-        type = FOLDER;
-        this.label = label;
+    private ItemClass(ItemRecord record) {
+        this.fileSize = record.getFileSize();
+        this.itemCount = record.getFolderSize();
+        this.label = record.getLabel();
+        this.type = record.getNodeType();
+        this.link = new Link(record.getLink(), this.type);
         setSelected();
-    }
-
-    public ItemClass(Link link, NodeType nodeType) {
-        this.type = nodeType;
-        this.link = link;
-        label = link.getEnd();
-        setSelected();
-        finish();
     }
 
 
@@ -93,32 +93,30 @@ public class ItemClass implements Serializable {
     }
 
     private void finish() {
-        if(type.equals(FILE)) {
-            new Thread(() -> {
+        new Thread(() -> {
+            if(type.equals(FILE)) {
                 try {
                     Core.sleep(10);
-                    if(fileSize == -1) {
+                    if (fileSize == -1) {
                         URL url = new URL(link.getUrlString());
                         URLConnection con = url.openConnection();
                         this.fileSize = con.getContentLength();
                     }
-                    if (this.fileSize >= 0) {
-                        String fileSize = Core.f(this.fileSize);
-                        append = " (" + fileSize + ")";
-                    }
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
-            }).start();
-        }
-        else {
-            new Thread(() -> {
-                if(link != null) {
-                    int folderSize = link.getLinks().size();
-                    append = " (" + folderSize + " items)";
+            }
+            else {
+                if (link != null) {
+                    linkCount = link.getLinks().size();
+                    itemCount = linkCount;
                 }
-            }).start();
-        }
+            }
+        }).start();
+    }
+
+    public void setItemCount(int count) {
+        itemCount = count;
     }
     public void toggleSelected() {
         selected.setValue(selected.not().getValue());
@@ -149,6 +147,18 @@ public class ItemClass implements Serializable {
     }
     @Override
     public String toString() {
+        String append = "";
+        switch(type) {
+            case FILE -> {
+                if(fileSize > -1) {
+                    append = " (" + Core.f(fileSize) + ")";
+                }
+            }
+            case FOLDER -> {
+                if(itemCount > -1)
+                    append = " (" + itemCount + " items)";
+            }
+        }
         return label + append;
     }
 }

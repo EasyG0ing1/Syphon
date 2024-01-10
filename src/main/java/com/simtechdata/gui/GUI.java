@@ -1,6 +1,7 @@
 package com.simtechdata.gui;
 
 import com.simtechdata.enums.MessageType;
+import com.simtechdata.enums.OS;
 import com.simtechdata.enums.TabType;
 import com.simtechdata.gui.tree.TreeForm;
 import com.simtechdata.utility.*;
@@ -202,7 +203,12 @@ public class GUI {
         cbHistory.setOnAction(e -> {
             String url = cbHistory.getValue();
             URL_HISTORY.setString(tfURL.getText());
-            Platform.runLater(() -> tfURL.setText(url));
+            Link link = new Link(new Element(url).html(url));
+            File file = new File(OS.getDataFilePath(link.getServer() + "_tree.json"));
+            Platform.runLater(() -> {
+                tfURL.setText(url);
+                btnSavedTree.setDisable(!file.exists());
+            });
         });
         tfURL = newTextField(LAST_URL.getString(), "Full URL to top folder");
         tfURL.setOnAction(e -> start());
@@ -214,6 +220,7 @@ public class GUI {
         tfURL.setPrefWidth(800);
         btnSavedTree = new Button("Saved Tree View");
         btnSavedTree.setMinWidth(125);
+        btnSavedTree.setDisable(true);
         btnNewTree = new Button("New Tree View");
         btnSavedTree.setOnAction(e -> newTree(false));
         btnNewTree.setOnAction(e -> newTree(true));

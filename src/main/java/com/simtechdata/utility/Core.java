@@ -17,15 +17,16 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.DoubleAdder;
 
-import static com.simtechdata.settings.SETTING.*;
+import static com.simtechdata.settings.SETTING.EXCLUDED_EXTENSIONS;
+import static com.simtechdata.settings.SETTING.LAST_FOLDER;
 
 public class Core {
 
@@ -51,7 +52,7 @@ public class Core {
     public static final LongProperty SELECTED_BYTES = new SimpleLongProperty(0);
     private static final AtomicLong Selected_Count = new AtomicLong();
     private static final AtomicLong Selected_Bytes = new AtomicLong();
-    private static final Map<String, Integer> countMap = new HashMap<>();
+    private static final Map<String, Integer> countMap = new ConcurrentHashMap<>();
     public static Set<Download> downloadSet = new HashSet<>();
 
     private static boolean monitorStarted = false;
@@ -138,14 +139,12 @@ public class Core {
     public static void addCount(String name) {
         String ext = FilenameUtils.getExtension(name).toLowerCase();
         Set<String> excludes = EXCLUDED_EXTENSIONS.duplicateExclusionSet();
+        boolean addExclusion = true;
         if(excludes != null) {
-            if (!excludes.contains(ext)) {
-                addCountPrivate(name);
-            }
+            addExclusion = !excludes.contains(ext);
         }
-        else {
+        if(addExclusion)
             addCountPrivate(name);
-        }
     }
 
     private static void addCountPrivate(String name) {
@@ -173,6 +172,12 @@ public class Core {
             }
         }
         return names;
+    }
+
+    public static void setRepeatOffenders(Set<String> wordSet) {
+        for(String word : wordSet) {
+            countMap.put(word, 3);
+        }
     }
 
     public static void sleep(long time) {

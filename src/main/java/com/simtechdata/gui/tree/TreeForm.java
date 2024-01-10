@@ -33,9 +33,10 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.LinkedList;
 import java.util.Set;
+import java.util.Timer;
+import java.util.TimerTask;
+import java.util.concurrent.atomic.AtomicInteger;
 
-import static com.simtechdata.enums.NodeType.FILE;
-import static com.simtechdata.enums.NodeType.FOLDER;
 import static com.simtechdata.settings.SETTING.EXCLUDED_EXTENSIONS;
 import static com.simtechdata.settings.SETTING.REMOVE_DUPLICATES;
 
@@ -55,20 +56,23 @@ public class TreeForm {
     private final IntegerProperty SELECTED_COUNT = new SimpleIntegerProperty();
     private final LongProperty SELECTED_BYTES = new SimpleLongProperty();
     private ProgressBar pBar;
-    private double totalItems = 0.0;
-    private double itemsAdded = 0.0;
-    private String activeThread = "";
+    private final AtomicInteger totalItemsToAdd = new AtomicInteger(0);
+    private final AtomicInteger totalItemsAdded = new AtomicInteger(0);
+    private final Timer timer;
     private Set<String> repeats;
     private double width;
     private double height;
     private Label lblItemCount;
     private Label lblTotalSize;
+    private boolean finalProgress = true;
 
 
     public TreeForm(Link parentLink, boolean skipFileCheck) {
         this.parentLink = parentLink;
         buildControls();
         new Thread(show(skipFileCheck)).start();
+        timer = new Timer();
+        timer.scheduleAtFixedRate(updateProgress(), 1000, 200);
     }
 
     private void buildControls() {
@@ -84,6 +88,8 @@ public class TreeForm {
         treeView.setOnMouseClicked(e -> {
             if (e.getClickCount() >= 2) {
                 TreeItem<ItemClass> treeItem = treeView.getSelectionModel().getSelectedItem();
+                if(treeItem == null)
+                    return;
                 Platform.runLater(() -> lblMsg.setText("Selecting Items"));
                 for (TreeItem<ItemClass> leaf : treeItem.getChildren()) {
                     if (leaf.getValue().isFile())
@@ -104,78 +110,63 @@ public class TreeForm {
         SELECTED_BYTES.addListener(((observable, oldValue, newValue) -> Platform.runLater(() -> lblTotalSize.setText(Core.f((long) newValue)))));
     }
 
+    private void addBranchToItem(TreeItem<ItemClass> treeItem, TreeItem<ItemClass> branch) {
+        Platform.runLater(() -> {
+            treeItem.getChildren().add(branch);
+            totalItemsAdded.incrementAndGet();
+        });
+    }
+
     public void buildTree(TreeItem<ItemClass> treeItem, Link topLink) {
-        if (topLink == null) {
-            return;
-        }
+        if (topLink == null) return;
         Links links = topLink.getLinks();
-        boolean dontAddDuplicates = cbRemoveDupes.isSelected();
         for (Link link : links) {
-            if (stop)
+            if (stop) {
                 return;
+            }
             if (link.isFile()) {
-                String name = link.getEnd();
-                Core.addCount(name);
-                repeats = Core.getRepeatOffenders();
-                boolean isDuplicate = repeats.contains(name);
-                if (isDuplicate && dontAddDuplicates) {
-                    continue;
-                }
-                bumpProgress();
-                TreeItem<ItemClass> fileItem = createTreeItem(new ItemClass(link, FILE));
-                Platform.runLater(() -> treeItem.getChildren().add(fileItem));
+                Core.addCount(link.getEnd());
             }
-            else {
-                TreeItem<ItemClass> folderItem = createTreeItem(new ItemClass(link, FOLDER));
-                addExpansion(folderItem, link);
-                bumpProgress();
-                Platform.runLater(() -> treeItem.getChildren().add(folderItem));
-            }
+            ItemClass itemClass = new ItemClass(link);
+            final TreeItem<ItemClass> branch = createTreeItem(itemClass);
+            if(itemClass.isFolder())
+                setExpandedProperty(branch, link);
+            addBranchToItem(treeItem, branch);
         }
-        if (dontAddDuplicates)
-            removeDuplicates();
         sortTree(treeItem);
     }
 
     private TreeItem<ItemClass> buildTreeItemFromItemRecord(ItemRecord itemRecord) {
-        TreeItem<ItemClass> treeItem;
-        ItemClass itemClass = ItemClass.getFromRecord(itemRecord);
-
-        treeItem = createTreeItem(itemClass);
-
-        if (itemClass.isFile()) {
-            String name = itemClass.getName();
-            Core.addCount(name);
+        if(itemRecord != null) {
+            ItemClass itemClass = ItemClass.getFromRecord(itemRecord);
+            TreeItem<ItemClass> treeItem = createTreeItem(itemClass);
+            if (itemClass.isFolder()) {
+                setExpandedProperty(treeItem, itemClass.getLink());
+            }
+            for (ItemRecord childRecord : itemRecord.getChildren()) {
+                addBranchToItem(treeItem, buildTreeItemFromItemRecord(childRecord));
+            }
+            return treeItem;
         }
-
-        if (itemClass.isFolder())
-            addExpansion(treeItem, itemClass.getLink());
-
-        for (ItemRecord childRecord : itemRecord.getChildren()) {
-            TreeItem<ItemClass> childTreeItem = buildTreeItemFromItemRecord(childRecord);
-            treeItem.getChildren().add(childTreeItem);
-        }
-        return treeItem;
+        return null;
     }
 
-    private void addExpansion(TreeItem<ItemClass> folderItem, Link link) {
-        folderItem.expandedProperty().addListener(((observable, oldValue, newValue) -> {
-            if (!oldValue && newValue) {
-                new Thread(() -> {
-                    Link lnk = folderItem.getValue().getLink();
-                    if (folderItem.getChildren().isEmpty()) {
-                        Platform.runLater(() -> lblMsg.setText("BUILDING BRANCH: " + (link != null ? link.getEnd() : "")));
-                        if (pBar.getProgress() == 0) {
-                            activeThread = Thread.currentThread().getName();
-                            itemsAdded = 0.0;
-                            if (folderItem.getValue().getLink() != null)
-                                totalItems = folderItem.getValue().getLink().getLinks().size();
+    private void setExpandedProperty(TreeItem<ItemClass> folderItem, Link link) {
+        folderItem.expandedProperty().addListener(((observable, wasExpanded, isExpanded) -> {
+            if (!wasExpanded && isExpanded) {
+                if (folderItem.getChildren().isEmpty()) {
+                    new Thread(() -> {
+                        Link folderLink = folderItem.getValue().getLink();
+                        if (folderLink != null) {
+                            final String append = link.getEnd();
+                            int itemsToAdd = folderLink.getLinks().size();
+                            Platform.runLater(() -> lblMsg.setText("BUILDING BRANCH: " + append));
+                            totalItemsToAdd.getAndAdd(itemsToAdd);
+                            buildTree(folderItem, folderLink);
+                            Platform.runLater(() -> lblMsg.setText("BRANCH BUILT: " + append));
                         }
-                        buildTree(folderItem, lnk);
-                        clearProgressBar();
-                        Platform.runLater(() -> lblMsg.setText("BRANCH BUILT: " + (link != null ? link.getEnd() : "")));
-                    }
-                }).start();
+                    }).start();
+                }
             }
         }));
     }
@@ -215,15 +206,23 @@ public class TreeForm {
     }
 
     private void removeDuplicateItems(TreeItem<ItemClass> topItem) {
-        topItem.getChildren().removeIf(treeItem -> repeats.contains(treeItem.getValue().getLabel()));
-        for (TreeItem<ItemClass> treeItem : topItem.getChildren()) {
-            removeDuplicateItems(treeItem);
+        int total = topItem.getChildren().size();
+        if(total > 0) {
+            topItem.getChildren().removeIf(treeItem -> repeats.contains(treeItem.getValue().getLabel()));
+            topItem.getValue().setItemCount(topItem.getChildren().size());
+            for (TreeItem<ItemClass> treeItem : topItem.getChildren()) {
+                if(treeItem.getValue().isFolder())
+                    removeDuplicateItems(treeItem);
+            }
         }
     }
 
     private void removeDuplicates() {
         repeats = Core.getRepeatOffenders();
-        Platform.runLater(() -> removeDuplicateItems(root));
+        Platform.runLater(() -> {
+            removeDuplicateItems(root);
+            sortTree(root);
+        });
     }
 
     private Runnable show(boolean skipFileCheck) {
@@ -244,9 +243,7 @@ public class TreeForm {
     private void createTree(boolean skipFileCheck) {
         Core.startMonitor();
         Core.reset();
-        itemsAdded = 0.0;
-        totalItems = parentLink.getLinks().size();
-        activeThread = Thread.currentThread().getName();
+        totalItemsToAdd.addAndGet(parentLink.getLinks().size());
         jsonFile = new File(OS.getDataFilePath(this.parentLink.getServer() + "_tree.json"));
         if (jsonFile.exists() && !skipFileCheck) {
             loadTreeFromJsonFile();
@@ -254,7 +251,6 @@ public class TreeForm {
         }
         else {
             buildTree(root, parentLink);
-            clearProgressBar();
             Platform.runLater(() -> lblMsg.setText("BASE TREE BUILT"));
         }
     }
@@ -302,16 +298,32 @@ public class TreeForm {
         return vbox;
     }
 
-    private void bumpProgress() {
-        if (Thread.currentThread().getName().equals(activeThread)) {
-            itemsAdded++;
-            double progress = itemsAdded / totalItems;
-            Platform.runLater(() -> pBar.setProgress(progress));
-        }
-    }
-
-    private void clearProgressBar() {
-        Platform.runLater(() -> pBar.setProgress(0.0));
+    private TimerTask updateProgress() {
+        return new TimerTask() {
+            @Override
+            public void run() {
+                double total = totalItemsToAdd.doubleValue();
+                double added = totalItemsAdded.doubleValue();
+                if(total > 0 && added > 0) {
+                    double progress = added / total;
+                    if(progress < 1) {
+                        Platform.runLater(() -> pBar.setProgress(progress));
+                        finalProgress = true;
+                    }
+                    else {
+                        if(finalProgress){
+                            Platform.runLater(() -> pBar.setProgress(0.0));
+                            if(cbRemoveDupes.isSelected()) {
+                                removeDuplicates();
+                            }
+                            totalItemsToAdd.set(0);
+                            totalItemsAdded.set(0);
+                            finalProgress = false;
+                        }
+                    }
+                }
+            }
+        };
     }
 
     private HBox newHBox(Node... nodes) {
@@ -378,13 +390,14 @@ public class TreeForm {
     }
 
     public void saveTreeAsJson() {
-        lblMsg.setText("SAVING TREE STRUCTURE");
+        lblMsg.setText("SAVING TREE ");
         ItemRecord rootRecord = buildItemRecordStructure(root);
+        rootRecord.setRepeats(repeats);
         Gson gson = new GsonBuilder().setPrettyPrinting().create();
         String json = gson.toJson(rootRecord);
         try {
             FileUtils.writeStringToFile(jsonFile, json, Charset.defaultCharset());
-            lblMsg.setText("SAVED: " + jsonFile.getAbsolutePath());
+            lblMsg.setText("SAVING TREE - DONE");
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -402,10 +415,10 @@ public class TreeForm {
             String json = FileUtils.readFileToString(jsonFile, Charset.defaultCharset());
             Gson gson = new GsonBuilder().setPrettyPrinting().create();
             ItemRecord rootRecord = gson.fromJson(json, ItemRecord.class);
+            Core.setRepeatOffenders(rootRecord.getRepeats());
             buildTreeFromJson(rootRecord);
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
-
 }

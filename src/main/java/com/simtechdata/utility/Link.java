@@ -211,8 +211,7 @@ public class Link {
             Document doc = Jsoup.connect(urlString).get();
             Elements elements = doc.select("a[href]");
             return new Links(elements);
-        } catch (IOException ignored) {
-        }
+        } catch (IOException ignored) {}
         return new Links();
     }
 
