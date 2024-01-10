@@ -35,5 +35,7 @@ C:\Program Files\Syphon\Syphon\Syphon.exe LinkFile=mylinks.txt
 ```
 The program will save the links into its own location and will use them to populate the drop down list at program launch. You can delete your txt file after the import is complete.
 
+Double-clicking on a folder in the tree view selects all files within that folder. Repeating this will unselect those files.
+
 ___
 I threw this project together over a weekend, and there are certainly areas that could use improvement, so feel free to create an issue or a pull request if you have any thoughts, concerns or wish to contribute.
