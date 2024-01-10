@@ -3,11 +3,9 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-
     <groupId>com.simtechdata</groupId>
     <artifactId>Syphon</artifactId>
     <version>1.0.0</version>
-
     <properties>
         <maven.compiler.release>20</maven.compiler.release>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -29,7 +27,6 @@
         <compatibility-arg/>
         <package.type/>
     </properties>
-
     <dependencies>
         <dependency>
             <groupId>org.openjfx</groupId>
@@ -64,7 +61,6 @@
     </dependencies>
     <build>
         <plugins>
-
             <!-- Maven Versions -->
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
@@ -84,14 +80,12 @@
                     </execution>
                 </executions>
             </plugin>
-
             <!-- Maven compiler plugin-->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>${maven-compiler-plugin}</version>
             </plugin>
-
             <!-- Maven Surefire plugin-->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -102,7 +96,6 @@
                     <argLine>-ea</argLine>
                 </configuration>
             </plugin>
-
             <!-- JavaFX Maven plugin-->
             <plugin>
                 <groupId>org.openjfx</groupId>
@@ -112,7 +105,6 @@
                     <mainClass>${mainClass}</mainClass>
                 </configuration>
             </plugin>
-
             <!-- GUI native image builder plugin-->
             <plugin>
                 <groupId>com.gluonhq</groupId>
@@ -147,7 +139,6 @@
                     </releaseConfiguration>
                 </configuration>
             </plugin>
-
             <!-- Maven Jar plugin-->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -162,7 +153,6 @@
                     </execution>
                 </executions>
             </plugin>
-
             <!-- Maven dependency plugin-->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -184,7 +174,6 @@
                     </execution>
                 </executions>
             </plugin>
-
             <!-- Maven shade plugin -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -209,10 +198,8 @@
             </plugin>
         </plugins>
     </build>
-
     <!-- To run the graalvm tracer, first run mvn clean package, then run this:
          java (2 dashes)module-path /Users/michael/JetBrainsProjects/IntelliJIdea/Syphon/target/libs (2 dashes)add-modules javafx.base,javafx.controls,javafx.graphics -agentlib:native-image-agent=config-output-dir=/Users/michael/JetBrainsProjects/IntelliJIdea/Syphon/graalvm -jar target/SyphonTwo-1.0.0.jar -->
-
     <profiles>
         <!-- [=macOS] GUI native image builder profile -->
         <profile>
@@ -239,6 +226,7 @@
             <properties>
                 <package.type>msi</package.type>
                 <system-linker-arg>${pom.basedir}/config/missing_symbols-windows-latest.o</system-linker-arg>
+                <compatibility-arg>-march=compatibility</compatibility-arg>
             </properties>
         </profile>
     </profiles>
