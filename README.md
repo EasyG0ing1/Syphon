@@ -1,12 +1,14 @@
 ## Syphon
 
-Syphon is a program that allows you to paste in a URL of any folder on a web server and as long as that server has directory listing enabled, then the entire folder tree including the files within the folders from that point downward will be mirrored on your local hard drive.
+Syphon is a program that allows you to paste in a URL of any folder on a web server and as long as that server has directory listing enabled, then the entire folder tree can be mirrored to your local hard drive, OR, you can pull up a tree view of the folder and its sub folders and pick and choose which files you want to download.
 
-You also have the option of loading the folder structure into a tree view where you can select which files you wish to download.
+## Installation
+Go to the [releases](https://github.com/EasyG0ing1/Syphon/releases) page and download the zip file for your operating system. Windows and Mac will be an installer where Linux offers you the compiled executable.
 
+## More Info
 Simply putting in a URL then pressing GO will cause the program to traverse that folder and it will recursively scour all of the folders and subfolders and as it finds files, it will add them to a que where it starts downloading as soon as the first file hits the queue.
 
-The queue submits the jobs to a Java Thread manager which has a max base pool of 20 threads. However, you can change the number of threads from 1 to 20.
+The queue submits the jobs to a thread manager which has a max base pool of 20 threads. However, you can change the number of threads from 1 to 20.
 
 ![MainScreen](./Images/MainScreen.png)
 
@@ -22,7 +24,7 @@ The total progress bar at the top accumulates the size of each file as they are 
 
 Once the job que count at the top of the screen stops counting, then that top progress bar will be as accurate as it's going to be.
 
-When you see files downloading where the progress bar just bounces from side to side, that would be a file that the server reported back as being of 0 size. The file will still download, but theres no way, obviously to show the progress since we don't know what the final size of the file will be.
+What is important to remember is if you get a file where the file size could not be determined because the web server didn't report it correctly, it could look like the progress bar is at 100% while the file is downloading, so just BE PATIENT while the file downloads. You can look at the total download count to know whether or not Syphon is done with all of the downloads.
 
 The **Saved Tree View** and **New Tree View** buttons work like this: Clicking on **New Tree View** will start to build the tree mirror from the web server. If you chose to save the tree view so that you don't have to wait for it to build in the future, you can click on the Save Tree button then the next time you go to that web site, simply click on **Saved Tree View** and it will load that saved tree from disk instead of re-building it from scratch.
 
@@ -31,7 +33,7 @@ You can also add urls so that the drop down list on the first screen always has 
 /Applications/Syphon.app/Contents/MacOS/Syphon LinkFile=~/mylinks.txt
 C:\Program Files\Syphon\Syphon\Syphon.exe LinkFile=mylinks.txt
 ```
-The program will save the links into its own location and will use them to populate the drop down list at program launch.
+The program will save the links into its own location and will use them to populate the drop down list at program launch. You can delete your txt file after the import is complete.
 
 ___
 I threw this project together over a weekend, and there are certainly areas that could use improvement, so feel free to create an issue or a pull request if you have any thoughts, concerns or wish to contribute.
