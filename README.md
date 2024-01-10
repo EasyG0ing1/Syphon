@@ -14,7 +14,7 @@ The queue submits the jobs to a thread manager which has a max base pool of 20 t
 
 ![TreeScreen](./Images/TreeScreen.png)
 
-When you set a folder for downloading, I recommend creating a folder called something like `Websites` as the program will first create a folder that is the name of the web server you're downloading from (www.server.com) then it will create the tree mirror underneath that folder.
+When you set a folder for downloading, I recommend creating a folder called something like `Websites` as the program will first create a folder that is the name of the web server you're downloading from (`www.server.com`) then it will create the tree mirror underneath that folder.
 
 The program remembers both the last URL you downloaded as well as your local download path for convenience.
 
