@@ -3,10 +3,13 @@ package com.simtechdata.settings;
 import com.simtechdata.enums.OS;
 import org.apache.commons.io.FileUtils;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Set;
 import java.util.prefs.Preferences;
 
 public enum SETTING {
@@ -18,7 +21,7 @@ public enum SETTING {
     EXCLUDED_EXTENSIONS,
     DUPLICATE_EXCLUSION_SET;
     public static final Preferences prefs = Preferences.userNodeForPackage(SETTING.class);
-
+    private static final String extensionExclusionFilename = "excludedExtensions.txt";
     private void clear() {
         prefs.remove(this.name());
     }
@@ -61,20 +64,49 @@ public enum SETTING {
     }
 
     public java.util.Set<String> duplicateExclusionSet() {
+        Set<String> exclusionSet = null;
         if (this.equals(DUPLICATE_EXCLUSION_SET)) {
-            return new HashSet<>(Arrays.asList(getString().toLowerCase().split(";")));
+            File exclusionListFile = Paths.get(OS.getDataFilePath(extensionExclusionFilename)).toFile();
+            if(exclusionListFile.exists()) {
+                try {
+                    String exclusionFile = FileUtils.readFileToString(exclusionListFile, Charset.defaultCharset());
+                    exclusionSet = new HashSet<>(Arrays.asList(exclusionFile.split("\\n")));
+
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+            else
+                exclusionSet = new HashSet<>(Arrays.asList(getString().toLowerCase().split(";")));
         }
-        return null;
+        return exclusionSet;
     }
 
     public String getString() {
         return switch (this) {
-            case LAST_FOLDER -> prefs.get(this.name(), System.getProperty("user.home"));
+            //First option checks to see if the last saved folder exists. If so, it sends that String and if not, it provides the users home folder.
+            case LAST_FOLDER -> (new File(prefs.get(this.name(), System.getProperty("user.home"))).exists() ? prefs.get(this.name(), System.getProperty("user.home")) : System.getProperty("user.home"));
             case LAST_URL -> prefs.get(this.name(), "https://");
             case THREAD_COUNT, EXCLUDED_EXTENSIONS -> prefs.get(this.name(), "");
             case URL_HISTORY -> getLocal();
             case REMOVE_DUPLICATES, DUPLICATE_EXCLUSION_SET -> null;
         };
+    }
+
+    public File getDownloadFolder() {
+        File folder;
+        if (this.equals(LAST_FOLDER)) {
+            try {
+                String folderString = getString();
+                folder = new File(folderString);
+                if(folder.exists())
+                    return folder;
+                folder = Paths.get(System.getProperty("user.home"), "Syphon").toFile();
+                FileUtils.forceMkdir(folder);
+                return folder;
+            } catch (IOException ignored) {}
+        }
+        return Paths.get(System.getProperty("user.home")).toFile();
     }
 
     private String getLocal() {

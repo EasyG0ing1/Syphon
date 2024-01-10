@@ -390,7 +390,6 @@ public class TreeForm {
         }
     }
 
-
     public void buildTreeFromJson(ItemRecord itemRecord) {
         root = buildTreeItemFromItemRecord(itemRecord);
         treeView.setRoot(root);

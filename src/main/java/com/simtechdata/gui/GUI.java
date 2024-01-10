@@ -240,7 +240,7 @@ public class GUI {
     private HBox getFolderField() {
         lblFolder = new Label("Folder");
         lblFolder.setPrefWidth(50);
-        tfFolder = newTextField(Core.baseFolder, "Path to mirror path structure");
+        tfFolder = newTextField(Core.downloadFolderString, "Path to mirror path structure");
         tfFolder.disableProperty().bind(stop.not());
         tfFolder.setPrefWidth(800);
         Button btnSet = new Button("Choose");
@@ -335,7 +335,7 @@ public class GUI {
 
     private void getFolder() {
         DirectoryChooser dc = new DirectoryChooser();
-        dc.setInitialDirectory(new File(LAST_FOLDER.getString()));
+        dc.setInitialDirectory(LAST_FOLDER.getDownloadFolder());
         File folder = dc.showDialog(null);
         if (folder != null) {
             LAST_FOLDER.setString(folder.getAbsolutePath());

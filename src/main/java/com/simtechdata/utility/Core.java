@@ -46,6 +46,7 @@ public class Core {
     public static final double WIDTH = SCREEN_WIDTH * .8;
     public static final double HEIGHT = SCREEN_HEIGHT * .8;
     public static String baseFolder = LAST_FOLDER.getString();
+    public static String downloadFolderString = LAST_FOLDER.getDownloadFolder().getAbsolutePath();
     public static final IntegerProperty SELECTED_COUNT = new SimpleIntegerProperty(0);
     public static final LongProperty SELECTED_BYTES = new SimpleLongProperty(0);
     private static final AtomicLong Selected_Count = new AtomicLong();
@@ -139,20 +140,27 @@ public class Core {
         Set<String> excludes = EXCLUDED_EXTENSIONS.duplicateExclusionSet();
         if(excludes != null) {
             if (!excludes.contains(ext)) {
-                boolean addNew = true;
-                int num = 1;
-                for (String word : countMap.keySet()) {
-                    if (word.equals(name)) {
-                        num = countMap.get(word) + 1;
-                        countMap.replace(word, num);
-                        addNew = false;
-                        break;
-                    }
-                }
-                if(addNew){
-                    countMap.put(name, num);
-                }
+                addCountPrivate(name);
             }
+        }
+        else {
+            addCountPrivate(name);
+        }
+    }
+
+    private static void addCountPrivate(String name) {
+        boolean addNew = true;
+        int num = 1;
+        for (String word : countMap.keySet()) {
+            if (word.equals(name)) {
+                num = countMap.get(word) + 1;
+                countMap.replace(word, num);
+                addNew = false;
+                break;
+            }
+        }
+        if(addNew){
+            countMap.put(name, num);
         }
     }
 
@@ -160,7 +168,7 @@ public class Core {
         Set<String> names = new HashSet<>();
         for (String name : countMap.keySet()) {
             Integer num = countMap.get(name);
-            if (num > 2) {
+            if (num > 1) {
                 names.add(name);
             }
         }
