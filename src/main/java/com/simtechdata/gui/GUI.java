@@ -209,13 +209,15 @@ public class GUI {
         cbHistory.setPrefWidth(300);
         cbHistory.setOnAction(e -> {
             String url = cbHistory.getValue();
-            URL_HISTORY.setString(tfURL.getText());
-            Link link = new Link(new Element(url).html(url));
-            File file = new File(OS.getDataFilePath(link.getServer() + "_tree.json"));
-            Platform.runLater(() -> {
-                tfURL.setText(url);
-                btnSavedTree.setDisable(!file.exists());
-            });
+            if (url != null && !url.isEmpty()) {
+                URL_HISTORY.setString(tfURL.getText());
+                Link link = new Link(new Element(url).html(url));
+                File file = new File(OS.getDataFilePath(link.getServer() + "_tree.json"));
+                Platform.runLater(() -> {
+                    tfURL.setText(url);
+                    btnSavedTree.setDisable(!file.exists());
+                });
+            }
         });
         tfURL = newTextField(LAST_URL.getString(), "Full URL to top folder");
         tfURL.setOnAction(e -> start());

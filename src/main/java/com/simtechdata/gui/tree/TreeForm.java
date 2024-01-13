@@ -70,7 +70,7 @@ public class TreeForm {
     public TreeForm(Link parentLink, boolean skipFileCheck) {
         this.parentLink = parentLink;
         buildControls();
-        new Thread(show(skipFileCheck)).start();
+        Platform.runLater(() -> new Thread(show(skipFileCheck)).start());
         timer = new Timer();
         timer.scheduleAtFixedRate(updateProgress(), 1000, 200);
     }
