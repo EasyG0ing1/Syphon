@@ -9,9 +9,10 @@ import org.apache.commons.io.FileUtils;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.Arrays;
-import java.util.LinkedList;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class Main extends Application {
 
@@ -24,37 +25,49 @@ public class Main extends Application {
                 File file = Paths.get(filename).toFile();
                 if(!file.exists()) {
                     file = Paths.get(folder, filename).toFile();
-                }
-                File linkFile = OS.getLinkFile();
-                String links;
-                if(linkFile.exists()) {
-                    links = FileUtils.readFileToString(linkFile, Charset.defaultCharset());
-                    linkList.addAll(Arrays.asList(links.split("\\n")));
-                }
-                if(file.exists()) {
-                    String newLinks = FileUtils.readFileToString(file, Charset.defaultCharset());
-                    String[] lnks = newLinks.split("\\n");
-                    for(String link : lnks) {
-                        if(!linkList.contains(link)) {
-                            linkList.addLast(link);
-                        }
+                    if(!file.exists()) {
+                        System.out.println("Invalid Path: " + filename + "\ntry again only use the files absolute path in the argument.");
+                        System.exit(0);
                     }
-                    StringBuilder sb = new StringBuilder();
-                    for(String link : linkList) {
-                        sb.append(link);
-                        sb.append(System.lineSeparator());
-                    }
-                    String fileString = sb.toString().replaceAll("\\n{2,}","\n");
-                    FileUtils.writeStringToFile(linkFile, fileString, Charset.defaultCharset());
-                    System.out.println("Links added. All links:\n\n" + fileString);
                 }
                 else {
-                    System.out.println("Invalid path: " + filename + "\ntry again only use the files absolute path in the argument.");
+                    String newLinks = FileUtils.readFileToString(file, Charset.defaultCharset());
+                    for(String link : newLinks.split(System.lineSeparator())) {
+                        addLinkToLinksFile(link);
+                    }
                 }
                 System.exit(0);
             }
         }
         launch(args);
+    }
+
+    public static void addLinkToLinksFile(String link) throws IOException {
+        File linkFile = OS.getLinkFile();
+        String links;
+        if(!linkFile.exists()) {
+            linkFile.createNewFile();
+        }
+        if(linkFile.exists()) {
+            links = FileUtils.readFileToString(linkFile, Charset.defaultCharset());
+            if(links.contains(link))
+                return;
+            Deque<String> list = new LinkedList<>(Arrays.asList(links.split(System.lineSeparator())));
+            Set<String> set = new HashSet<>(list);
+
+            if(!set.contains(link)) {
+                set.add(link);
+                list.addLast(link);
+            }
+
+            String sortedListString = set.stream()
+                    .sorted(Comparator.comparing(String::toString))
+                    .collect(Collectors.joining(System.lineSeparator()));
+
+            Files.writeString(linkFile.toPath(), sortedListString, Charset.defaultCharset());
+
+            System.out.println("Link Added: " + link);
+        }
     }
 
     @Override

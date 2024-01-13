@@ -1,5 +1,6 @@
 package com.simtechdata.gui;
 
+import com.simtechdata.Main;
 import com.simtechdata.enums.MessageType;
 import com.simtechdata.enums.OS;
 import com.simtechdata.enums.TabType;
@@ -27,6 +28,7 @@ import org.jsoup.nodes.Element;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.*;
 import java.util.concurrent.*;
@@ -64,8 +66,14 @@ public class GUI {
     private final Map<Integer, ProgressObject> progressMap = new HashMap<>();
     private final Set<Integer> indexSet = new HashSet<>();
     private ProgressObject poTotals;
-
+    private boolean setDownload = false;
     private final Timer timer;
+    private Label lblURL;
+    private Label lblFolder;
+    private long startTime, endTime;
+    private int completeCount = 0;
+
+
 
     private void startSelectDownloads() {
         tfURL.setVisible(false);
@@ -185,15 +193,13 @@ public class GUI {
 
     private void setHistory() {
         String rawData = URL_HISTORY.getString();
-        if(rawData != null){
+        if (rawData != null) {
             String[] array = rawData.split(";");
             ObservableList<String> list = FXCollections.observableArrayList(Arrays.asList(array));
-            if(list != null && !list.isEmpty())
+            if (list != null && !list.isEmpty())
                 Platform.runLater(() -> cbHistory.setItems(list));
         }
     }
-
-    private Label lblURL;
 
     private HBox getURLField() {
         lblURL = new Label("URL");
@@ -239,12 +245,26 @@ public class GUI {
 
     private void newTree(boolean skipFileCheck) {
         String url = tfURL.getText();
-        LAST_URL.setString(url);
-        Element link = new Element(url).html(url);
-        new TreeForm(new Link(link), skipFileCheck);
+        if(isValidURL(url)) {
+            LAST_URL.setString(url);
+            try {Main.addLinkToLinksFile(url);} catch (IOException ignored) {}
+            Element link = new Element(url).html(url);
+            new TreeForm(new Link(link), skipFileCheck);
+        }else {
+            lblURL.setText("Not a valid URL");
+        }
     }
 
-    private Label lblFolder;
+
+    public static boolean isValidURL(String urlString) {
+        try {
+            new URL(urlString);
+            return true;
+        } catch (MalformedURLException e) {
+            return false;
+        }
+    }
+
     private HBox getFolderField() {
         lblFolder = new Label("Folder");
         lblFolder.setPrefWidth(50);
@@ -350,9 +370,6 @@ public class GUI {
             tfFolder.setText(folder.getAbsolutePath());
         }
     }
-    private long startTime, endTime;
-
-    private int completeCount = 0;
 
     private TimerTask reportQueSize() {
         return new TimerTask() {
@@ -426,8 +443,6 @@ public class GUI {
     public static void startTreeDownloads() {
         INSTANCE.startSelectDownloads();
     }
-
-    private boolean setDownload = false;
 
     private boolean initDownloads() {
         jobQue.clear();
